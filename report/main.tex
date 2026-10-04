@@ -36,10 +36,10 @@ For deterministic validation and testing, we store a corruption recipe for every
 We use the authors' official annotations to pair 1,058 training and 1,046 test photographs with sketches. A style-stratified 15\% validation split of the official training portion gives 899 training and 159 validation pairs, again with seed 42. The annotation's \texttt{style} value, not the photo folder number, supplies the three classes. Paired images receive the same horizontal flip in training. The official test pairs remain untouched until final selection.
 
 \subsection{Metrics and Selection}
-For restoration and paired sketch evaluation, we calculate per-image MAE, SSIM, and PSNR. The fixed validation selection score is $0.8\,\mathrm{MAE}+0.2(1-\mathrm{SSIM})$, averaged equally across corruption classes or sketch styles. This score is fixed while training-loss weights vary. Classifier selection uses macro accuracy across the four balanced classes. We separately report clean behavior and each corruption severity, and both overall and style-macro sketch metrics.
+For restoration and paired sketch evaluation, we calculate per-image MAE, SSIM, and PSNR. The fixed validation selection score is $0.8\,\mathrm{MAE}+0.2(1-\mathrm{SSIM})$, averaged equally across corruption classes or sketch styles. This score is fixed while training-loss weights vary. Classifier selection uses macro-F1 across the four balanced classes. We separately report clean behavior and each corruption severity, and both overall and style-macro sketch metrics.
 
 \section{Task 1: Universal Autoencoder}
-The universal convolutional autoencoder encodes 128 $\times$ 128 RGB images into a 16 $\times$ 16 feature map, making its latent representation smaller than the input. Bilinear upsampling and convolutions decode an RGB result. Its training objective is
+The universal convolutional autoencoder encodes each 128 $\times$ 128 RGB input (49,152 scalar values) into a 48 $\times$ 16 $\times$ 16 latent tensor (12,288 values), a 4:1 compression. It uses no skip connections, so all reconstruction information passes through the bottleneck. Bilinear upsampling and convolutions decode an RGB result. Its training objective is
 \begin{equation}
 \mathcal{L}_{\mathrm{rec}}=\alpha\lVert \hat{x}-x\rVert_1+(1-\alpha)\bigl(1-\mathrm{SSIM}(\hat{x},x)\bigr).
 \end{equation}
@@ -61,11 +61,20 @@ The generator receives a normalized photograph and a learned embedding of one of
 \section{Implementation and Reproducibility}
 Training uses PyTorch, fixed seeds, saved dataset manifests, resume checkpoints, and local MLflow experiment records. The final model graphs are exported to ONNX and checked against PyTorch output numerically before FastAPI inference. A React and Tailwind browser interface, designed in Google Stitch, exposes all four workspaces. Docker Compose starts the frontend and CPU inference backend with one command. The Git repository excludes raw datasets, secrets, virtual environments, and mutable experiment stores.
 
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{figures/application_dashboard.png}
+\caption{The browser interface showing the universal restoration workspace. Workspace availability is reported by the inference backend.}
+\label{fig:application}
+\end{figure}
+
 \section{Experimental Results}
 \input{generated/results.tex}
 
 \section{Discussion and Limitations}
-This section will interpret the measured trade-offs after final evaluation. In particular, oracle-versus-predicted differences distinguish classifier mistakes from expert quality, while per-severity tables show whether apparent gains survive stronger corruption. Face-to-sketch scores compare each generated image only with the paired target for its annotated style; changing style for the same photo is assessed qualitatively, since counterfactual targets are unavailable.
+The Task 1 results show a consistent severity effect for spatially destructive inputs: MAE rises from 0.0420 at low occlusion to 0.0599 at high occlusion, while SSIM falls from 0.7595 to 0.6414. High noise and blur also reduce structure scores, but remain easier than large masked regions. On clean inputs the autoencoder still changes pixels (MAE 0.0355), unlike Task 2's explicit identity bypass; this is a measured limitation of a single shared reconstruction path. The Task 2 classifier reached 0.9931 validation macro-F1, but this validation result alone does not establish routed test performance; the held-out oracle-versus-predicted comparison remains necessary to attribute errors to routing or expert quality.
+
+For FS2K, the paired-test error is largest for style 2 (MAE 0.1662, SSIM 0.3594). Style 3 has the best measured scores but only 46 test examples, compared with 619 and 381 for styles 1 and 2, respectively. The style-macro metrics therefore complement, rather than replace, the overall average. Scores measure agreement with the annotated paired sketch, not subjective artistic quality; counterfactual targets for the other two styles are unavailable.
 
 \section{Conclusion}
 The final conclusion will reflect the recorded held-out results and identified failure cases.

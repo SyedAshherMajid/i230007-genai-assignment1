@@ -20,6 +20,8 @@ def main() -> None:
     parser.add_argument("--epochs", type=int, default=8)
     parser.add_argument("--max-steps", type=int, default=150)
     parser.add_argument("--parents", type=Path, default=ROOT / "artifacts/task2")
+    parser.add_argument("--enqueue-trial", action="append", default=[],
+                        help="JSON object of fixed parameters for a controlled trial")
     args = parser.parse_args()
     study_dir = ROOT / "artifacts/studies" / args.task
     study_dir.mkdir(parents=True, exist_ok=True)
@@ -27,10 +29,13 @@ def main() -> None:
         storage=f"sqlite:///{(study_dir / 'study.db').as_posix()}", load_if_exists=True,
         sampler=optuna.samplers.TPESampler(seed=42),
         pruner=optuna.pruners.MedianPruner(n_startup_trials=2, n_warmup_steps=3))
+    for parameters in args.enqueue_trial:
+        study.enqueue_trial(json.loads(parameters))
 
     def run_trial(trial: optuna.Trial, command: list[str], run_name: str) -> float:
         env = os.environ.copy()
-        env["PYTHONPATH"] = str(ROOT / "src")
+        env["PYTHONPATH"] = os.pathsep.join(
+            value for value in (str(ROOT / "src"), env.get("PYTHONPATH", "")) if value)
         process = subprocess.Popen([sys.executable] + command, cwd=ROOT, env=env,
                                    stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                                    text=True, encoding="utf-8", errors="replace", bufsize=1)
@@ -52,13 +57,15 @@ def main() -> None:
                                 raise optuna.TrialPruned()
                     except (json.JSONDecodeError, KeyError):
                         pass
-        if process.wait() != 0 or not score < float("inf"):
-            raise RuntimeError(f"Trial failed; inspect {log_file}")
+        return_code = process.wait()
+        if return_code != 0 or not score < float("inf"):
+            log_tail = log_file.read_text(encoding="utf-8", errors="replace")[-4000:]
+            raise RuntimeError(f"Trial failed (exit {return_code}); inspect {log_file}\n{log_tail}")
         return score
 
     def objective(trial: optuna.Trial) -> float:
         lr = trial.suggest_float("lr", 5e-5, 6e-4, log=True)
-        batch = trial.suggest_categorical("batch", [4, 8, 16])
+        batch = trial.suggest_categorical("batch", [8, 16, 32] if args.task == "classifier" else [4, 8, 16])
         if args.task == "gan":
             d_lr = trial.suggest_float("d_lr", 5e-5, 3e-4, log=True)
             base = trial.suggest_categorical("base", [16, 32])
@@ -78,16 +85,23 @@ def main() -> None:
             bottleneck = trial.suggest_categorical("bottleneck", [24, 48, 64])
             alpha = trial.suggest_float("alpha", 0.5, 0.9)
             params += ["--base", str(base), "--bottleneck", str(bottleneck), "--alpha", str(alpha)]
+            if args.task == "universal":
+                dropout = trial.suggest_categorical("dropout", [0.0, 0.1, 0.2])
+                params += ["--dropout", str(dropout)]
         if args.task == "classifier":
             base = trial.suggest_categorical("base", [8, 16, 24])
             dropout = trial.suggest_categorical("dropout", [0.0, 0.1, 0.3])
-            params += ["--base", str(base), "--dropout", str(dropout)]
+            weight_decay = trial.suggest_categorical("weight_decay", [0.0, 1e-5, 1e-4, 1e-3])
+            params += ["--base", str(base), "--dropout", str(dropout),
+                       "--weight-decay", str(weight_decay)]
         if args.task == "soft":
             alpha = trial.suggest_float("alpha", 0.5, 0.9)
+            temperature = trial.suggest_categorical("temperature", [0.5, 1.0, 2.0])
             ce = trial.suggest_float("lambda_ce", 0.1, 0.7)
             balance = trial.suggest_float("lambda_balance", 0.001, 0.1, log=True)
             warmup = trial.suggest_int("warmup", 2, 5)
-            params += ["--alpha", str(alpha), "--lambda-ce", str(ce), "--lambda-balance", str(balance),
+            params += ["--alpha", str(alpha), "--temperature", str(temperature),
+                       "--lambda-ce", str(ce), "--lambda-balance", str(balance),
                        "--warmup", str(warmup), "--parents", str(args.parents)]
         if args.task == "specialists":
             results = []

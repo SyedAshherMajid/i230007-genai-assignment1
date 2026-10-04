@@ -45,7 +45,8 @@ def recipe(label: str, seed: int, severity: str | None = None, size: int = 128) 
         raise ValueError(label)
     if severity is not None and severity not in SEVERITIES:
         raise ValueError(severity)
-    result: dict = {"label": label, "seed": int(seed), "severity": severity or "train"}
+    result: dict = {"label": label, "seed": int(seed),
+                    "severity": severity or ("none" if label == "clean" else "train")}
     if label == "clean":
         return result
     rng = np.random.default_rng(seed)

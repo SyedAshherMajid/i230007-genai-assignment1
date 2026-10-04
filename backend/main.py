@@ -56,7 +56,14 @@ def to_image(batch: np.ndarray, sketch: bool = False) -> np.ndarray:
 @app.get("/health")
 def health() -> dict:
     available = {name: (MODEL_DIR / f"{name}.onnx").is_file() for name in NEEDED}
-    return {"status": "ready" if all(available.values()) else "models_pending", "models": available}
+    workspaces = {
+        "universal": available["universal"],
+        "hard": all(available[name] for name in ("classifier", "salt_expert", "blur_expert", "occlusion_expert")),
+        "soft": available["soft_moe"],
+        "sketch": available["sketch_generator"],
+    }
+    return {"status": "ready" if all(workspaces.values()) else "models_pending",
+            "models": available, "workspaces": workspaces}
 
 
 @app.post("/infer/{task}")

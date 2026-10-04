@@ -22,10 +22,42 @@ def checkpoint(path: Path) -> dict:
     return torch.load(path, map_location="cpu", weights_only=False)
 
 
+def soft_model(config: dict, smoke: bool) -> SoftMixture:
+    base = int(config.get("base", 16))
+    bottleneck = int(config.get("bottleneck", 48))
+    dropout = float(config.get("dropout", 0.1))
+    temperature = float(config.get("temperature", 1.0))
+    if smoke:
+        return SoftMixture(CorruptionClassifier(base, dropout),
+                           [ConvAutoencoder(base, bottleneck, dropout) for _ in range(3)], temperature)
+    parent_dir = Path(config.get("parents", ROOT / "artifacts/task2"))
+    if not parent_dir.is_absolute():
+        parent_dir = ROOT / parent_dir
+    classifier_state = checkpoint(parent_dir / "classifier/best.pt")
+    classifier_config = classifier_state.get("config", {})
+    gate = CorruptionClassifier(int(classifier_config.get("base", base)),
+                                float(classifier_config.get("dropout", dropout)))
+    gate.load_state_dict(classifier_state["model"])
+    experts = []
+    for label in (1, 2, 3):
+        expert_state = checkpoint(parent_dir / f"expert_{label}/best.pt")
+        expert_config = expert_state.get("config", {})
+        expert = ConvAutoencoder(int(expert_config.get("base", base)),
+                                 int(expert_config.get("bottleneck", bottleneck)),
+                                 float(expert_config.get("dropout", dropout)))
+        expert.load_state_dict(expert_state["model"])
+        experts.append(expert)
+    return SoftMixture(gate, experts, temperature)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--smoke", action="store_true", help="Export untrained architecture smoke checks")
     parser.add_argument("--output", type=Path, default=ROOT / "models")
+    parser.add_argument("--only", nargs="+", choices=("universal", "classifier", "salt_expert",
+                                                     "blur_expert", "occlusion_expert", "soft_moe",
+                                                     "sketch_generator"),
+                        help="Export selected trained models while other tasks are still training")
     args = parser.parse_args()
     args.output.mkdir(parents=True, exist_ok=True)
     torch.manual_seed(42)
@@ -39,19 +71,24 @@ def main() -> None:
         ("sketch_generator", ROOT / "artifacts/task4/best.pt", "sketch"),
     ]
     reports = []
+    previous_report = args.output / "parity.json"
+    if args.only and previous_report.exists():
+        reports = [record for record in json.loads(previous_report.read_text())
+                   if record["model"] not in args.only]
     for name, source, kind in sources:
+        if args.only and name not in args.only:
+            continue
         state = {} if args.smoke else checkpoint(source)
         config = state.get("config", {})
         base = int(config.get("base", 16))
         bottleneck = int(config.get("bottleneck", 48))
         dropout = float(config.get("dropout", 0.1))
         if kind == "ae":
-            model = ConvAutoencoder(base, bottleneck)
+            model = ConvAutoencoder(base, bottleneck, dropout)
         elif kind == "classifier":
             model = CorruptionClassifier(base, dropout)
         elif kind == "soft":
-            model = SoftMixture(CorruptionClassifier(base, dropout),
-                                [ConvAutoencoder(base, bottleneck) for _ in range(3)])
+            model = soft_model(config, args.smoke)
         else:
             model = SketchGenerator(base, int(config.get("embedding_dim", 8)),
                                     float(config.get("dropout", 0.2)))

@@ -15,6 +15,7 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 from torch.utils.data import DataLoader
+from sklearn.metrics import confusion_matrix, precision_recall_fscore_support
 
 from genai_a1.models import ConvAutoencoder, CorruptionClassifier, SoftMixture
 from genai_a1.pets import BalancedBatchSampler, PetCasesDataset, PetTrainDataset
@@ -35,6 +36,8 @@ def parser() -> argparse.ArgumentParser:
     p.add_argument("--base", type=int, default=16)
     p.add_argument("--bottleneck", type=int, default=48)
     p.add_argument("--dropout", type=float, default=0.1)
+    p.add_argument("--weight-decay", type=float, default=0.0)
+    p.add_argument("--temperature", type=float, default=1.0)
     p.add_argument("--lambda-ce", type=float, default=0.3)
     p.add_argument("--lambda-balance", type=float, default=0.02)
     p.add_argument("--warmup", type=int, default=3)
@@ -49,19 +52,26 @@ def parser() -> argparse.ArgumentParser:
 
 def model_from_args(args: argparse.Namespace) -> torch.nn.Module:
     if args.task in ("universal", "specialist"):
-        return ConvAutoencoder(args.base, args.bottleneck)
+        return ConvAutoencoder(args.base, args.bottleneck, args.dropout)
     if args.task == "classifier":
         return CorruptionClassifier(args.base, args.dropout)
     if args.parents is None:
         raise ValueError("Soft mixture requires --parents containing classifier and three expert checkpoints")
-    gate = CorruptionClassifier(args.base, args.dropout)
-    gate.load_state_dict(torch.load(args.parents / "classifier/best.pt", map_location="cpu", weights_only=False)["model"])
+    classifier_state = torch.load(args.parents / "classifier/best.pt", map_location="cpu", weights_only=False)
+    classifier_config = classifier_state["config"]
+    gate = CorruptionClassifier(int(classifier_config.get("base", args.base)),
+                                float(classifier_config.get("dropout", args.dropout)))
+    gate.load_state_dict(classifier_state["model"])
     experts = []
     for label in (1, 2, 3):
-        expert = ConvAutoencoder(args.base, args.bottleneck)
-        expert.load_state_dict(torch.load(args.parents / f"expert_{label}/best.pt", map_location="cpu", weights_only=False)["model"])
+        expert_state = torch.load(args.parents / f"expert_{label}/best.pt", map_location="cpu", weights_only=False)
+        expert_config = expert_state["config"]
+        expert = ConvAutoencoder(int(expert_config.get("base", args.base)),
+                                 int(expert_config.get("bottleneck", args.bottleneck)),
+                                 float(expert_config.get("dropout", args.dropout)))
+        expert.load_state_dict(expert_state["model"])
         experts.append(expert)
-    return SoftMixture(gate, experts)
+    return SoftMixture(gate, experts, args.temperature)
 
 
 @torch.no_grad()
@@ -69,7 +79,8 @@ def validate(model: torch.nn.Module, loader: DataLoader, args: argparse.Namespac
              device: torch.device) -> dict:
     model.eval()
     by_label: dict[int, dict[str, list[float]]] = defaultdict(lambda: defaultdict(list))
-    correct = defaultdict(list)
+    classifier_targets: list[int] = []
+    classifier_predictions: list[int] = []
     weights = defaultdict(list)
     for batch in loader:
         image = batch["input"].to(device)
@@ -77,8 +88,8 @@ def validate(model: torch.nn.Module, loader: DataLoader, args: argparse.Namespac
         true = batch["label"].to(device)
         if args.task == "classifier":
             predicted = model(image).argmax(1)
-            for label, is_correct in zip(true.tolist(), (predicted == true).tolist()):
-                correct[label].append(float(is_correct))
+            classifier_targets.extend(true.cpu().tolist())
+            classifier_predictions.extend(predicted.cpu().tolist())
             continue
         if args.task == "soft":
             output, routes = model(image)
@@ -93,8 +104,25 @@ def validate(model: torch.nn.Module, loader: DataLoader, args: argparse.Namespac
             for name, values in measured.items():
                 by_label[label][name].append(float(values[index]))
     if args.task == "classifier":
-        scores = {f"accuracy_{k}": float(np.mean(values)) for k, values in correct.items()}
-        scores["score"] = 1.0 - float(np.mean(list(scores.values())))
+        labels = np.arange(4)
+        precision, recall, f1, support = precision_recall_fscore_support(
+            classifier_targets, classifier_predictions, labels=labels, zero_division=0)
+        matrix = confusion_matrix(classifier_targets, classifier_predictions, labels=labels)
+        normalized = matrix / np.maximum(matrix.sum(axis=1, keepdims=True), 1)
+        scores = {
+            "accuracy": float(np.mean(np.asarray(classifier_targets) == classifier_predictions)),
+            "macro_precision": float(precision.mean()),
+            "macro_recall": float(recall.mean()),
+            "macro_f1": float(f1.mean()),
+            "confusion_matrix": matrix.tolist(),
+            "confusion_matrix_normalized": normalized.tolist(),
+        }
+        for index, label in enumerate(("clean", "noise", "blur", "occlusion")):
+            scores[f"precision_{label}"] = float(precision[index])
+            scores[f"recall_{label}"] = float(recall[index])
+            scores[f"f1_{label}"] = float(f1[index])
+            scores[f"support_{label}"] = int(support[index])
+        scores["score"] = 1.0 - scores["macro_f1"]
         return scores
     summary: dict = {}
     for label, values in by_label.items():
@@ -135,7 +163,8 @@ def main() -> None:
         optimizer = torch.optim.Adam([{"params": model.gate.parameters(), "lr": args.lr},
                                       {"params": model.experts.parameters(), "lr": args.lr * 0.25}])
     else:
-        optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
+        optimizer = torch.optim.Adam(model.parameters(), lr=args.lr,
+                                     weight_decay=args.weight_decay if args.task == "classifier" else 0.0)
     start_epoch = 0
     best_score = float("inf")
     if args.resume:
@@ -165,6 +194,7 @@ def main() -> None:
                 for expert in model.experts:
                     for parameter in expert.parameters():
                         parameter.requires_grad_(not frozen)
+                    expert.train(not frozen)
             losses = []
             for step, batch in enumerate(train_loader):
                 image = batch["input"].to(device)
@@ -178,7 +208,7 @@ def main() -> None:
                     output, routes = model(image)
                     reconstruction, _ = reconstruction_loss(output, target, args.alpha)
                     gate_ce = F.cross_entropy(model.gate(image), label)
-                    balance = (routes.mean(0) - 0.25).square().mean()
+                    balance = (routes.mean(0) - 0.25).square().sum()
                     loss = reconstruction + args.lambda_ce * gate_ce + args.lambda_balance * balance
                 else:
                     output = model(image)

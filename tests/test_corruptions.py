@@ -9,6 +9,8 @@ def test_corruption_recipes_replay_and_preserve_targets():
     for label in LABELS:
         for severity in (SEVERITIES if label != "clean" else (None,)):
             settings = recipe(label, 934, severity)
+            if label == "clean":
+                assert settings["severity"] == "none"
             first = apply_corruption(clean, settings)
             second = apply_corruption(clean, settings)
             assert first.shape == clean.shape and first.dtype == np.uint8

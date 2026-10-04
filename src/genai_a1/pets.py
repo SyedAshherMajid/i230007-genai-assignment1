@@ -93,7 +93,8 @@ class PetCasesDataset(Dataset):
         case = self.cases[index]
         clean = self.images[self.ids[case["id"]]]
         damaged = apply_corruption(clean, case)
+        severity = "none" if case["label"] == "clean" else case["severity"] or "none"
         return {"input": image_tensor(damaged), "target": image_tensor(clean),
                 "label": torch.tensor(LABELS.index(case["label"]), dtype=torch.long),
-                "id": case["id"], "severity": case["severity"]}
+            "id": case["id"], "severity": severity}
 

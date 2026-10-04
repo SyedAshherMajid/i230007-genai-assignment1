@@ -1,0 +1,17 @@
+{
+  "id": "syedashher/genai-a1-pet-tasks-1-and-2",
+  "title": "GenAI A1 Pet Tasks 1 and 2",
+  "code_file": "train_blur_expert.py",
+  "language": "python",
+  "kernel_type": "script",
+  "is_private": true,
+  "enable_gpu": true,
+  "enable_internet": false,
+  "dataset_sources": [
+    "syedashher/genai-a1-pet-training-inputs",
+    "syedashher/genai-a1-private-training-code"
+  ],
+  "competition_sources": [],
+  "kernel_sources": [],
+  "model_sources": []
+}

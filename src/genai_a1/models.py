@@ -11,11 +11,11 @@ def conv_block(in_channels: int, out_channels: int, stride: int = 1) -> nn.Seque
 
 
 class ConvAutoencoder(nn.Module):
-    def __init__(self, base: int = 16, bottleneck: int = 48):
+    def __init__(self, base: int = 16, bottleneck: int = 48, dropout: float = 0.1):
         super().__init__()
         self.encoder = nn.Sequential(conv_block(3, base), conv_block(base, base * 2, 2),
                                      conv_block(base * 2, base * 4, 2),
-                                     conv_block(base * 4, bottleneck, 2))
+                                     conv_block(base * 4, bottleneck, 2), nn.Dropout2d(dropout))
         self.decoder = nn.Sequential(
             nn.Upsample(scale_factor=2, mode="bilinear", align_corners=False), conv_block(bottleneck, base * 4),
             nn.Upsample(scale_factor=2, mode="bilinear", align_corners=False), conv_block(base * 4, base * 2),
@@ -40,15 +40,18 @@ class CorruptionClassifier(nn.Module):
 
 class SoftMixture(nn.Module):
     """Branch 0 is identity; branches 1-3 are specialist restorers."""
-    def __init__(self, gate: CorruptionClassifier, experts: list[ConvAutoencoder]):
+    def __init__(self, gate: CorruptionClassifier, experts: list[ConvAutoencoder], temperature: float = 1.0):
         super().__init__()
         if len(experts) != 3:
             raise ValueError("Three trained experts required")
+        if temperature <= 0:
+            raise ValueError("Temperature must be positive")
         self.gate = gate
         self.experts = nn.ModuleList(experts)
+        self.temperature = temperature
 
     def forward(self, image: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
-        weights = torch.softmax(self.gate(image), dim=1)
+        weights = torch.softmax(self.gate(image) / self.temperature, dim=1)
         branches = torch.stack([image] + [expert(image) for expert in self.experts], dim=1)
         reconstructed = (branches * weights[:, :, None, None, None]).sum(dim=1)
         return reconstructed, weights

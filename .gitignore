@@ -34,6 +34,8 @@ cloud/code_upload/
 cloud/output/
 cloud/probe_output/
 cloud/pulled/
+cloud/pets_upload/
+cloud/kaggle_task2/output/
 cloud/kaggle_kernel/*.ipynb
 cloud/kaggle_probe/*.ipynb
 design/*response.json

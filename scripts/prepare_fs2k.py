@@ -23,7 +23,9 @@ def locate_root() -> Path:
 
 def pair_path(base: Path, kind: str, name: str) -> Path:
     stem = name if kind == "photo" else name.replace("photo", "sketch").replace("image", "sketch")
-    for extension in (".jpg", ".png"):
+    # The authors' archive includes uppercase .JPG files (for example
+    # photo3/image0449.JPG); Linux/Kaggle paths are case-sensitive.
+    for extension in (".jpg", ".JPG", ".png", ".PNG"):
         candidate = base / kind / (stem + extension)
         if candidate.exists():
             return candidate

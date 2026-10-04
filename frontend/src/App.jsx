@@ -51,9 +51,16 @@ export default function App() {
   const video = useRef(null)
   const stream = useRef(null)
   const active = workspaces.find(item => item.id === task)
+  const taskReady = health?.workspaces?.[task]
 
   useEffect(() => {
-    fetch('/api/health').then(response => response.json()).then(setHealth).catch(() => setHealth({ status: 'offline' }))
+    let mounted = true
+    const refresh = () => fetch('/api/health').then(response => response.json())
+      .then(data => { if (mounted) setHealth(data) })
+      .catch(() => { if (mounted) setHealth({ status: 'offline' }) })
+    refresh()
+    const timer = setInterval(refresh, 20000)
+    return () => { mounted = false; clearInterval(timer) }
   }, [])
   useEffect(() => () => { if (preview) URL.revokeObjectURL(preview) }, [preview])
   useEffect(() => () => { stream.current?.getTracks().forEach(track => track.stop()) }, [])
@@ -92,6 +99,7 @@ export default function App() {
 
   async function run() {
     if (!file) { setError('Upload or capture an image first.'); return }
+    if (taskReady === false) { setError('This workspace model is still being prepared.'); return }
     setBusy(true); setError(''); setResult(null)
     try {
       const form = new FormData(); form.append('file', file)
@@ -114,7 +122,7 @@ export default function App() {
     <aside className="border-b border-slate-200 bg-white lg:min-h-screen lg:w-72 lg:shrink-0 lg:border-b-0 lg:border-r">
       <div className="border-b border-slate-100 px-6 py-6"><div className="flex items-center gap-3"><div className="flex size-11 items-center justify-center rounded-xl bg-indigo-600 text-xl font-extrabold text-white">R</div><div><h1 className="text-base font-extrabold tracking-tight">Restore & Sketch Lab</h1><p className="text-xs text-slate-500">Generative vision workspace</p></div></div></div>
       <nav className="p-4" aria-label="Workspaces"><p className="tag px-3 pb-3 pt-2">Workspaces</p><div className="grid gap-1 sm:grid-cols-2 lg:grid-cols-1">{workspaces.map(item => <button key={item.id} type="button" onClick={() => changeTask(item.id)} className={`flex w-full items-start gap-3 rounded-xl px-3 py-3 text-left transition ${task === item.id ? 'bg-indigo-50 text-indigo-800' : 'hover:bg-slate-50'}`} aria-current={task === item.id ? 'page' : undefined}><span className={`mt-0.5 text-xs font-bold ${task === item.id ? 'text-indigo-600' : 'text-slate-400'}`}>{item.number}</span><span><span className="block text-sm font-semibold">{item.label}</span><span className="mt-0.5 block text-xs text-slate-500">{item.subtitle}</span></span></button>)}</div></nav>
-      <div className="mx-4 mb-5 rounded-xl border border-slate-200 bg-slate-50 p-4"><p className="tag mb-2">System status</p><div className="flex items-center gap-2 text-sm"><span className={`size-2 rounded-full ${health?.status === 'ready' ? 'bg-teal-500' : health?.status === 'offline' ? 'bg-rose-500' : 'bg-amber-500'}`} /><span>{health?.status === 'ready' ? 'All models available' : health?.status === 'offline' ? 'Backend unavailable' : health ? 'Models being prepared' : 'Checking models…'}</span></div></div>
+      <div className="mx-4 mb-5 rounded-xl border border-slate-200 bg-slate-50 p-4"><p className="tag mb-2">Workspace status</p><div className="flex items-center gap-2 text-sm"><span className={`size-2 rounded-full ${taskReady ? 'bg-teal-500' : health?.status === 'offline' ? 'bg-rose-500' : 'bg-amber-500'}`} /><span>{taskReady ? 'Ready for inference' : health?.status === 'offline' ? 'Backend unavailable' : taskReady === false ? 'Model being prepared' : 'Checking models…'}</span></div></div>
     </aside>
 
     <main className="min-w-0 flex-1 px-4 py-6 sm:px-8 lg:px-10 lg:py-9"><div className="mx-auto max-w-6xl">
@@ -132,7 +140,7 @@ export default function App() {
 
         <div className="card flex flex-col p-5 sm:p-6"><p className="tag mb-5">02 / {task === 'sketch' ? 'Style controls' : 'Input controls'}</p>
           {task === 'sketch' ? <><label className="mb-2 text-sm font-semibold" htmlFor="style">Sketch style</label><select id="style" className="field" value={style} onChange={event => setStyle(Number(event.target.value))}><option value={1}>Style 1</option><option value={2}>Style 2</option><option value={3}>Style 3</option></select><p className="mt-3 text-xs leading-relaxed text-slate-500">Styles correspond to the three annotation labels in FS2K. The same photograph can be rendered in each style.</p></> : <><label className="mb-2 text-sm font-semibold" htmlFor="corruption">Input treatment</label><select id="corruption" className="field" value={corruption} onChange={event => setCorruption(event.target.value)}>{corruptionOptions.map(item => <option key={item.value} value={item.value}>{item.label}</option>)}</select>{corruption !== 'none' && corruption !== 'clean' && <><label className="mb-2 mt-5 text-sm font-semibold" htmlFor="severity">Severity</label><select id="severity" className="field" value={severity} onChange={event => setSeverity(event.target.value)}><option value="low">Low</option><option value="medium">Medium</option><option value="high">High</option></select></>}<p className="mt-4 text-xs leading-relaxed text-slate-500">Use an already damaged image as-is, or choose a synthetic corruption to apply before inference.</p></>}
-          <div className="mt-auto pt-7"><button type="button" onClick={run} disabled={busy || !file} className="w-full rounded-xl bg-indigo-600 px-5 py-3.5 text-sm font-bold text-white shadow-sm hover:bg-indigo-700">{busy ? 'Processing…' : task === 'sketch' ? 'Generate sketch' : 'Run restoration'} <span aria-hidden="true">→</span></button></div>
+          <div className="mt-auto pt-7"><button type="button" onClick={run} disabled={busy || !file || taskReady === false} className="w-full rounded-xl bg-indigo-600 px-5 py-3.5 text-sm font-bold text-white shadow-sm hover:bg-indigo-700">{busy ? 'Processing…' : task === 'sketch' ? 'Generate sketch' : 'Run restoration'} <span aria-hidden="true">→</span></button></div>
         </div>
       </div>
 
