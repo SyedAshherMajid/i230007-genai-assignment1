@@ -115,6 +115,7 @@ Training uses PyTorch, fixed seeds, saved dataset manifests, resume checkpoints,
 \section{Experimental Results}
 \input{generated/results.tex}
 \input{generated/optuna.tex}
+\input{generated/submission_snapshot.tex}
 
 \begin{figure*}[t]
 \centering
@@ -124,19 +125,19 @@ Training uses PyTorch, fixed seeds, saved dataset manifests, resume checkpoints,
 \end{figure*}
 
 \section{Discussion and Limitations}
-The Task 1 results show a consistent severity effect for spatially destructive inputs: MAE rises from 0.0420 at low occlusion to 0.0599 at high occlusion, while SSIM falls from 0.7595 to 0.6414. High noise and blur also reduce structure scores, but remain easier than large masked regions. On clean inputs the autoencoder still changes pixels (MAE 0.0355), unlike Task 2's explicit identity bypass; this is a measured limitation of a single shared reconstruction path. The Task 2 classifier reached 0.9931 validation macro-F1, but this validation result alone does not establish routed test performance; the held-out oracle-versus-predicted comparison remains necessary to attribute errors to routing or expert quality.
+The Task 1 results show a consistent severity effect for spatially destructive inputs: MAE rises from 0.0420 at low occlusion to 0.0599 at high occlusion, while SSIM falls from 0.7595 to 0.6414. High noise and blur also reduce structure scores, but remain easier than large masked regions. On clean inputs the autoencoder still changes pixels (MAE 0.0355), unlike Task 2's explicit identity bypass; this is a measured limitation of a single shared reconstruction path. The Task 2 classifier reached 0.9931 full-validation macro-F1. The 32-ID matched comparison in Table~\ref{tab:routing-snapshot} includes a measured oracle-versus-predicted gap and soft weights, but is too small to establish full routed test performance.
 
 For FS2K, the paired-test error is largest for style 2 (MAE 0.1662, SSIM 0.3594). Style 3 has the best measured scores but only 46 test examples, compared with 619 and 381 for styles 1 and 2, respectively. The style-macro metrics therefore complement, rather than replace, the overall average. Scores measure agreement with the annotated paired sketch, not subjective artistic quality; counterfactual targets for the other two styles are unavailable.
 
 \section{Conclusion}
-The final conclusion will reflect the recorded held-out results and identified failure cases.
+The universal restoration system and conditional sketch generator have completed held-out test evaluations. The universal model is weakest on high occlusion, while the sketch generator has its largest paired error on style 2. A four-class classifier and three specialists support hard routing in the browser application; a short initialized soft-mixture fit also produces interpretable route weights. The current hard-router and soft-mixture results remain preliminary because their complete held-out test comparisons are not included. This distinction is essential when comparing the four systems.
 
 \appendices
 \section{AI Assistance and Verification}
 AI assistance was used to organize the assignment plan; draft implementation code, interface prompts, and report text. The author verified dataset split counts and provenance, inspected generated UI output, ran automated and GPU checks, reviewed numerical results and failures, and retained responsibility for technical claims. AI-generated code and prose were revised where checks exposed errors. The repository records design prompts and experiment configurations for auditability.
 
 \section{Demonstration and Artifacts}
-The source repository is \url{https://github.com/SyedAshherMajid/i230007-genai-assignment1}. The final YouTube demonstration URL and trained ONNX download location will be added after all four workspaces are verified.
+The source repository is \url{https://github.com/SyedAshherMajid/i230007-genai-assignment1}. The trained ONNX download location is \url{https://github.com/SyedAshherMajid/i230007-genai-assignment1/releases/download/submission-snapshot/GenAI_A1_ONNX_models.zip}. The YouTube demonstration URL will be inserted after video upload.
 
 \begin{thebibliography}{9}
 \bibitem{parkhi2012} O. M. Parkhi, A. Vedaldi, A. Zisserman, and C. V. Jawahar, ``Cats and Dogs,'' in \emph{Proc. CVPR}, 2012. [Online]. Available: \url{https://www.robots.ox.ac.uk/~vgg/publications/2012/parkhi12a/}

@@ -40,6 +40,9 @@ cloud/kaggle_kernel/*.ipynb
 cloud/kaggle_probe/*.ipynb
 design/*response.json
 report/build/
+submission/*.zip
+submission/*.pdf
+submission/*.webm
 
 
 

@@ -84,6 +84,16 @@ The evaluator writes case-level CSV, summary JSON, per-condition/severity metric
 
 ## Models And Application
 
+The seven trained ONNX graphs for the submission snapshot are available as a [GitHub Release archive](https://github.com/SyedAshherMajid/i230007-genai-assignment1/releases/download/submission-snapshot/GenAI_A1_ONNX_models.zip). The archive contains `parity.json` and `SHA256SUMS.txt`. Task 1 and Task 4 use final selected checkpoints; the blur/occlusion specialists and soft mixture are explicitly preliminary snapshots described in the report. Download and extract the archive into `models/` before starting Compose:
+
+```powershell
+Invoke-WebRequest 'https://github.com/SyedAshherMajid/i230007-genai-assignment1/releases/download/submission-snapshot/GenAI_A1_ONNX_models.zip' -OutFile GenAI_A1_ONNX_models.zip
+Expand-Archive GenAI_A1_ONNX_models.zip -DestinationPath models -Force
+docker compose up -d --build
+```
+
+Open `http://localhost:8080`. After model extraction, Compose starts and serves all four workspaces in one command.
+
 After all seven trained checkpoints exist, export them and check PyTorch/ONNX parity:
 
 ```powershell

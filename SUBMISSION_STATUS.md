@@ -1,5 +1,9 @@
 # Submission package status
 
+## Frozen submission snapshot
+
+The report PDF is at `submission/GenAI_Assignment_1_Report.pdf`; its YouTube URL is the only outstanding edit before Classroom upload. The ONNX archive is at `submission/GenAI_A1_ONNX_models.zip` and publicly downloadable from <https://github.com/SyedAshherMajid/i230007-genai-assignment1/releases/download/submission-snapshot/GenAI_A1_ONNX_models.zip>. The browser walkthrough backup is at `artifacts/demo/GenAI_Assignment_1_Demo.webm`; a complete recording with the experiment-record section is being written as `artifacts/demo/GenAI_Assignment_1_Demo_complete.webm`. The snapshot includes Task 1 and 4 official test evidence, Task 2 classifier/full specialist validation evidence, and explicitly preliminary matched Task 2/3 validation results on 32 IDs. Later training does not alter these submitted numbers or release assets without a new explicit review.
+
 This checklist is tied to the requirements in `GenAI_Assignment#1.pdf` (especially pages 1–2 and 8–9). The PDF controls the requirements; [WORK_STATUS.md](WORK_STATUS.md) tracks live training and [EXECUTION_PLAN.md](EXECUTION_PLAN.md) explains the phase plan. Keep training running while closing the submission items below. Do not upload a draft artifact as if it were final.
 
 | Required item | Exact location or destination | Current state | Completion check |
