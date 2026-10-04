@@ -15,6 +15,13 @@ const corruptionOptions = [
 ]
 const routeLabels = ['Clean', 'Noise', 'Blur', 'Occlusion']
 const weightLabels = ['Identity', 'Noise expert', 'Blur expert', 'Occlusion expert']
+const modelDownloads = {
+  universal: [['Universal autoencoder', 'universal']],
+  hard: [['Corruption classifier', 'classifier'], ['Noise specialist', 'salt_expert'],
+    ['Blur specialist', 'blur_expert'], ['Occlusion specialist', 'occlusion_expert']],
+  soft: [['Soft mixture', 'soft_moe']],
+  sketch: [['Sketch generator', 'sketch_generator']],
+}
 
 function MeasureBars({ values, labels, title }) {
   return <section className="card p-5" aria-label={title}>
@@ -28,8 +35,8 @@ function MeasureBars({ values, labels, title }) {
 
 function ImageCard({ label, src, emptyText }) {
   return <div className="card overflow-hidden"><div className="border-b border-slate-100 px-5 py-3"><p className="tag">{label}</p></div>
-    <div className="flex aspect-square items-center justify-center bg-slate-50 p-4">
-      {src ? <img className="max-h-full max-w-full rounded-lg object-contain shadow-sm" src={src} alt={label} /> : <p className="max-w-52 text-center text-sm text-slate-400">{emptyText}</p>}
+    <div className="flex h-80 items-center justify-center bg-slate-50 p-4">
+      {src ? <img className="h-full w-full max-h-72 max-w-72 rounded-lg object-contain shadow-sm" src={src} alt={label} /> : <p className="max-w-52 text-center text-sm text-slate-400">{emptyText}</p>}
     </div>
   </div>
 }
@@ -150,6 +157,9 @@ export default function App() {
         {result?.probabilities && <div className="mt-5 grid gap-5 md:grid-cols-2"><MeasureBars values={result.probabilities} labels={routeLabels} title="Classifier probabilities" /><div className="card p-5"><p className="tag mb-4">Routing decision</p><p className="text-xl font-bold capitalize">{result.predicted_label}</p><p className="mt-2 text-sm text-slate-500">Selected branch: <strong>{result.selected_branch}</strong></p></div></div>}
         {result?.weights && <div className="mt-5"><MeasureBars values={result.weights} labels={weightLabels} title="Soft mixture contributions" /></div>}
       </section>
+      <section className="mt-7 card p-5" aria-label="Download model files"><p className="tag mb-3">04 / Model files</p><p className="mb-4 text-sm text-slate-500">Download the trained ONNX models used by this workspace.</p><div className="flex flex-wrap gap-2">{modelDownloads[task].map(([label, name]) => health?.models?.[name]
+        ? <a key={name} href={`/api/models/${name}`} download={`${name}.onnx`} className="rounded-lg border border-indigo-200 bg-white px-3 py-2 text-sm font-semibold text-indigo-700 hover:bg-indigo-50">{label} ↓</a>
+        : <span key={name} className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-400">{label} pending</span>)}</div></section>
       <p className="mt-10 border-t border-slate-200 pt-5 text-xs text-slate-400">Generative AI Assignment 1 · Syed Ashher Majid · FAST NUCES Islamabad</p>
     </div></main>
   </div>

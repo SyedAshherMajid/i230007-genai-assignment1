@@ -9,6 +9,7 @@ import time
 
 from fastapi import FastAPI, File, HTTPException, Query, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 from PIL import Image, UnidentifiedImageError
 import numpy as np
 import onnxruntime as ort
@@ -64,6 +65,16 @@ def health() -> dict:
     }
     return {"status": "ready" if all(workspaces.values()) else "models_pending",
             "models": available, "workspaces": workspaces}
+
+
+@app.get("/models/{name}")
+def download_model(name: str) -> FileResponse:
+    if name not in NEEDED:
+        raise HTTPException(404, "Unknown model")
+    path = MODEL_DIR / f"{name}.onnx"
+    if not path.is_file():
+        raise HTTPException(503, f"Model {name} is not available yet")
+    return FileResponse(path, media_type="application/octet-stream", filename=path.name)
 
 
 @app.post("/infer/{task}")

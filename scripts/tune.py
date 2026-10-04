@@ -65,7 +65,8 @@ def main() -> None:
 
     def objective(trial: optuna.Trial) -> float:
         lr = trial.suggest_float("lr", 5e-5, 6e-4, log=True)
-        batch = trial.suggest_categorical("batch", [8, 16, 32] if args.task == "classifier" else [4, 8, 16])
+        batch_options = [8, 16, 32] if args.task == "classifier" else ([4, 8] if args.task == "soft" else [4, 8, 16])
+        batch = trial.suggest_categorical("batch", batch_options)
         if args.task == "gan":
             d_lr = trial.suggest_float("d_lr", 5e-5, 3e-4, log=True)
             base = trial.suggest_categorical("base", [16, 32])
@@ -99,7 +100,7 @@ def main() -> None:
             temperature = trial.suggest_categorical("temperature", [0.5, 1.0, 2.0])
             ce = trial.suggest_float("lambda_ce", 0.1, 0.7)
             balance = trial.suggest_float("lambda_balance", 0.001, 0.1, log=True)
-            warmup = trial.suggest_int("warmup", 2, 5)
+            warmup = trial.suggest_int("warmup", 2, 3)
             params += ["--alpha", str(alpha), "--temperature", str(temperature),
                        "--lambda-ce", str(ce), "--lambda-balance", str(balance),
                        "--warmup", str(warmup), "--parents", str(args.parents)]
@@ -113,7 +114,10 @@ def main() -> None:
         command = ["scripts/train_pets.py", args.task, "--run-dir", str(study_dir / f"trial_{trial.number}")] + params
         return run_trial(trial, command, f"trial_{trial.number}")
 
-    study.optimize(objective, n_trials=args.trials)
+    # A single out-of-memory configuration should not discard the whole bounded study.
+    study.optimize(objective, n_trials=args.trials, catch=(RuntimeError,))
+    if not any(trial.state == optuna.trial.TrialState.COMPLETE for trial in study.trials):
+        raise RuntimeError(f"No completed trials; inspect logs under {study_dir}")
     (study_dir / "best.json").write_text(json.dumps({"value": study.best_value,
                                                       "params": study.best_params}, indent=2))
     print(json.dumps({"best_value": study.best_value, "best_params": study.best_params}))

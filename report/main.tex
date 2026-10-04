@@ -59,13 +59,27 @@ Initially the experts are frozen while the gate adapts. Joint fine-tuning then u
 The generator receives a normalized photograph and a learned embedding of one of three FS2K style labels. A compact U-Net with skip connections produces a three-channel sketch. A PatchGAN discriminator receives the photograph, real or generated sketch, and its own learned style embedding. We alternate discriminator and generator updates with binary cross-entropy adversarial loss; the generator also minimizes a weighted paired $\ell_1$ term. Optuna searches learning rates, batch size, width, dropout, style-embedding size, and reconstruction weight. The best configuration is trained beyond the short search trials before final test evaluation.
 
 \section{Implementation and Reproducibility}
-Training uses PyTorch, fixed seeds, saved dataset manifests, resume checkpoints, and local MLflow experiment records. The final model graphs are exported to ONNX and checked against PyTorch output numerically before FastAPI inference. A React and Tailwind browser interface, designed in Google Stitch, exposes all four workspaces. Docker Compose starts the frontend and CPU inference backend with one command. The Git repository excludes raw datasets, secrets, virtual environments, and mutable experiment stores.
+Training uses PyTorch, fixed seeds, saved dataset manifests, resume checkpoints, and local MLflow experiment records. The final model graphs are exported to ONNX and checked against PyTorch output numerically before FastAPI inference. A React and Tailwind browser interface, designed in Google Stitch, exposes all four workspaces and offers their trained ONNX graphs for download. Docker Compose starts the frontend and CPU inference backend with one command. The Git repository excludes raw datasets, secrets, virtual environments, and mutable experiment stores.
 
 \begin{figure}[t]
 \centering
 \includegraphics[width=\columnwidth]{figures/application_dashboard.png}
 \caption{The browser interface showing the universal restoration workspace. Workspace availability is reported by the inference backend.}
 \label{fig:application}
+\end{figure}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{figures/application_universal_result.png}
+\caption{Live browser inference with the trained Task 1 model: high-severity salt-and-pepper input and restored output.}
+\label{fig:application-universal}
+\end{figure}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{figures/application_sketch_result.png}
+\caption{Live browser inference with the trained Task 4 model: uploaded photograph and generated style-2 sketch.}
+\label{fig:application-sketch}
 \end{figure}
 
 \section{Experimental Results}

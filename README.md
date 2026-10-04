@@ -90,13 +90,13 @@ After all seven trained checkpoints exist, export them and check PyTorch/ONNX pa
 python scripts/export_models.py
 ```
 
-This writes the required inference graphs to `models/`. The untrained smoke exports are not substitutes for these final trained models. Start the frontend and backend containers together:
+To use completed workspaces while later models train, export only their available trained checkpoints, for example `python scripts/export_models.py --only universal classifier sketch_generator`; rerun the full export when all checkpoints are final. This writes the required inference graphs to `models/`. The untrained smoke exports are not substitutes for these final trained models. Start the frontend and backend containers together:
 
 ```powershell
 docker compose up --build
 ```
 
-Open `http://localhost:8080`. The API health endpoint is proxied at `http://localhost:8080/api/health`; the application reports missing models until all expected ONNX files are present. Stop containers with `Ctrl+C`.
+Open `http://localhost:8080`. The API health endpoint is proxied at `http://localhost:8080/api/health`; the application reports readiness separately for each workspace as its trained ONNX graph becomes available. The interface also links to each available trained ONNX file through `/api/models/{name}`. Stop containers with `Ctrl+C` (or `docker compose down` if started detached).
 
 For local development, start the API with `uvicorn backend.main:app --reload --port 8000` and the frontend from `frontend/` with `npm ci` followed by `npm run dev`. The Vite development server uses the configured API proxy.
 
@@ -111,4 +111,6 @@ python scripts/export_models.py --help
 ```
 
 The IEEE LaTeX sources and generated result tables are under `report/`. Final pet results, application screenshots, trained ONNX files, and the demonstration link are added as their verification is completed. Raw datasets, virtual environments, checkpoints, caches, credentials, and mutable experiment stores must remain out of Git.
+
+With Compose running and the trained Task 1/4 graphs present, `node frontend/scripts/capture_app.mjs` captures actual browser inference panels for the report using the installed local Chrome and prepared sample data.
 

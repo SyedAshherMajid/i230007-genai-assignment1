@@ -265,7 +265,9 @@ def main() -> None:
             if "task3" in args.tasks:
                 outputs["task3"], soft_weights = models["task3"](image)
 
-        task_metrics: dict[str, dict[str, np.ndarray]] = {}
+        task_metrics: dict[str, dict[str, np.ndarray]] = {
+            "input": reconstruction_metrics(image, target),
+        }
         if "task1" in args.tasks:
             task_metrics["task1"] = reconstruction_metrics(outputs["task1"], target)
         if "task2" in args.tasks:
