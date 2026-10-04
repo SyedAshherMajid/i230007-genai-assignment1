@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Restore &amp; Sketch Lab — CVPR Benchmark v2.4</title>
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Google Fonts: Inter & JetBrains Mono -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Tailwind Configuration verbatim from Design System -->
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "on-tertiary-fixed-variant": "#2f2ebe",
+            "on-primary-fixed-variant": "#372abf",
+            "on-secondary": "#ffffff",
+            "on-primary-container": "#c1beff",
+            "on-surface-variant": "#464554",
+            "surface-variant": "#d8e3fb",
+            "on-tertiary-container": "#bebfff",
+            "on-error": "#ffffff",
+            "surface-container": "#e7eeff",
+            "on-background": "#111c2d",
+            "surface-tint": "#5148d7",
+            "tertiary-fixed-dim": "#c0c1ff",
+            "surface-container-lowest": "#ffffff",
+            "on-primary-fixed": "#100069",
+            "inverse-on-surface": "#ecf1ff",
+            "surface-container-low": "#f0f3ff",
+            "surface-dim": "#cfdaf2",
+            "primary": "#2a14b4",
+            "on-tertiary-fixed": "#07006c",
+            "tertiary-container": "#3b3bc9",
+            "background": "#f9f9ff",
+            "primary-container": "#4338ca",
+            "on-tertiary": "#ffffff",
+            "on-secondary-fixed": "#00201d",
+            "error": "#ba1a1a",
+            "on-secondary-container": "#006f66",
+            "surface-container-highest": "#d8e3fb",
+            "surface": "#f9f9ff",
+            "secondary-container": "#86f2e4",
+            "secondary": "#006a61",
+            "on-error-container": "#93000a",
+            "inverse-primary": "#c3c0ff",
+            "surface-bright": "#f9f9ff",
+            "secondary-fixed-dim": "#6bd8cb",
+            "primary-fixed-dim": "#c3c0ff",
+            "secondary-fixed": "#89f5e7",
+            "error-container": "#ffdad6",
+            "primary-fixed": "#e3dfff",
+            "outline": "#777586",
+            "tertiary-fixed": "#e1e0ff",
+            "on-secondary-fixed-variant": "#005049",
+            "tertiary": "#1f1ab3",
+            "surface-container-high": "#dee8ff",
+            "on-surface": "#111c2d",
+            "on-primary": "#ffffff",
+            "outline-variant": "#c7c4d7",
+            "inverse-surface": "#263143"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.125rem",
+            "lg": "0.25rem",
+            "xl": "0.5rem",
+            "full": "0.75rem"
+          },
+          "spacing": {
+            "space-md": "0.75rem",
+            "margin-md": "1.5rem",
+            "gutter": "1rem",
+            "space-xl": "2rem",
+            "space-sm": "0.5rem",
+            "margin": "1rem",
+            "space-xs": "0.25rem",
+            "space-lg": "1.25rem",
+            "margin-lg": "2rem",
+            "gutter-lg": "1.5rem"
+          },
+          "fontFamily": {
+            "headline-lg-mobile": ["Inter"],
+            "body-lg": ["Inter"],
+            "label-lg": ["JetBrains Mono"],
+            "headline-sm": ["Inter"],
+            "label-md": ["JetBrains Mono"],
+            "body-sm": ["Inter"],
+            "label-sm": ["JetBrains Mono"],
+            "display-lg": ["Inter"],
+            "headline-md": ["Inter"],
+            "headline-lg": ["Inter"],
+            "body-md": ["Inter"]
+          },
+          "fontSize": {
+            "headline-lg-mobile": ["1.375rem", { "lineHeight": "1.875rem", "letterSpacing": "-0.015em", "fontWeight": "600" }],
+            "body-lg": ["1rem", { "lineHeight": "1.625rem", "fontWeight": "400" }],
+            "label-lg": ["0.875rem", { "lineHeight": "1.25rem", "letterSpacing": "-0.01em", "fontWeight": "500" }],
+            "headline-sm": ["1rem", { "lineHeight": "1.5rem", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+            "label-md": ["0.75rem", { "lineHeight": "1rem", "letterSpacing": "0em", "fontWeight": "500" }],
+            "body-sm": ["0.75rem", { "lineHeight": "1.2rem", "fontWeight": "400" }],
+            "label-sm": ["0.6875rem", { "lineHeight": "0.875rem", "letterSpacing": "0.02em", "fontWeight": "400" }],
+            "display-lg": ["2.25rem", { "lineHeight": "2.75rem", "letterSpacing": "-0.025em", "fontWeight": "600" }],
+            "headline-md": ["1.25rem", { "lineHeight": "1.75rem", "letterSpacing": "-0.015em", "fontWeight": "600" }],
+            "headline-lg": ["1.75rem", { "lineHeight": "2.25rem", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+            "body-md": ["0.875rem", { "lineHeight": "1.4rem", "fontWeight": "400" }]
+          }
+        },
+      },
+    }
+  </script>
+</head>
+<body class="bg-background text-on-surface antialiased min-h-screen flex selection:bg-primary selection:text-on-primary">
+<!-- ========================================================================= -->
+<!-- SHARED COMPONENT: SideNavBar (Anchored via JSON Schema)                  -->
+<!-- ========================================================================= -->
+<aside class="fixed left-0 top-0 z-40 h-screen w-72 p-space-md flex flex-col justify-between shrink-0 bg-surface-container-lowest dark:bg-inverse-surface border-r border-outline-variant dark:border-outline shadow-sm dark:shadow-none">
+<!-- Top Identity / Lab Header -->
+<div class="flex flex-col gap-space-md">
+<div class="flex items-center gap-space-sm px-space-xs py-space-xs border-b border-outline-variant pb-space-sm">
+<div class="w-8 h-8 rounded bg-primary-container flex items-center justify-center text-on-primary font-label-md text-label-md font-bold shadow-xs">
+          CV
+        </div>
+<div class="flex flex-col overflow-hidden">
+<span class="text-headline-sm font-headline-sm font-bold text-on-surface dark:text-inverse-on-surface tracking-tight truncate">
+            Restore &amp; Sketch Lab
+          </span>
+<span class="text-label-sm font-label-sm text-on-surface-variant dark:text-surface-variant truncate">
+            CVPR Benchmark v2.4
+          </span>
+</div>
+</div>
+<!-- Navigation Workspaces Tabs (4 Defined in JSON) -->
+<nav class="flex flex-col gap-space-xs">
+<div class="px-space-xs pt-space-xs pb-1">
+<span class="text-label-sm font-label-sm uppercase tracking-wider text-outline">Active Workspaces</span>
+</div>
+<!-- Tab 1: Universal Restoration (ACTIVE) -->
+<a class="flex items-center gap-space-sm px-space-md py-space-sm bg-surface-container-high dark:bg-primary-container text-primary dark:text-on-primary-container font-semibold rounded-lg border-l-4 border-primary dark:border-primary-fixed transition-all duration-150 ease-in-out cursor-pointer group" href="#">
+<span class="material-symbols-outlined text-primary dark:text-on-primary-container text-[20px]" data-icon="auto_fix_high">auto_fix_high</span>
+<div class="flex flex-col text-left">
+<span class="text-label-md font-label-md">Universal Restoration</span>
+<span class="text-label-sm font-label-sm font-normal opacity-80 text-primary">Blind single-pass • 128×128</span>
+</div>
+</a>
+<!-- Tab 2: Hard-Routed Restoration (Inactive) -->
+<a class="flex items-center gap-space-sm px-space-md py-space-sm text-on-surface-variant dark:text-surface-variant rounded-lg font-medium hover:bg-surface-container dark:hover:bg-surface-dim hover:text-on-surface dark:hover:text-inverse-on-surface transition-colors duration-150 cursor-pointer group" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="alt_route">alt_route</span>
+<div class="flex flex-col text-left">
+<span class="text-label-md font-label-md">Hard-Routed Restoration</span>
+<span class="text-label-sm font-label-sm font-normal opacity-70">Discrete route #1–#4</span>
+</div>
+</a>
+<!-- Tab 3: Soft Mixture of Experts (Inactive) -->
+<a class="flex items-center gap-space-sm px-space-md py-space-sm text-on-surface-variant dark:text-surface-variant rounded-lg font-medium hover:bg-surface-container dark:hover:bg-surface-dim hover:text-on-surface dark:hover:text-inverse-on-surface transition-colors duration-150 cursor-pointer group" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="hub">hub</span>
+<div class="flex flex-col text-left">
+<span class="text-label-md font-label-md">Soft Mixture of Experts</span>
+<span class="text-label-sm font-label-sm font-normal opacity-70">Weights w1..w4 gating</span>
+</div>
+</a>
+<!-- Tab 4: Face-to-Sketch (Inactive) -->
+<a class="flex items-center gap-space-sm px-space-md py-space-sm text-on-surface-variant dark:text-surface-variant rounded-lg font-medium hover:bg-surface-container dark:hover:bg-surface-dim hover:text-on-surface dark:hover:text-inverse-on-surface transition-colors duration-150 cursor-pointer group" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="draw">draw</span>
+<div class="flex flex-col text-left">
+<span class="text-label-md font-label-md">Face-to-Sketch</span>
+<span class="text-label-sm font-label-sm font-normal opacity-70">Latent sketch styles 1-3</span>
+</div>
+</a>
+</nav>
+<!-- Model Device Telemetry Status Card in Sidebar -->
+<div class="mt-space-sm p-space-sm rounded-lg bg-surface-container-low border border-outline-variant flex flex-col gap-space-xs">
+<div class="flex items-center justify-between">
+<span class="text-label-sm font-label-sm font-semibold text-on-surface">CUDA ACCELERATOR</span>
+<span class="inline-flex items-center gap-1 text-label-sm font-label-sm text-secondary bg-secondary-container/40 px-1.5 py-0.5 rounded font-medium">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+            ACTIVE
+          </span>
+</div>
+<div class="text-body-sm font-body-sm text-on-surface-variant flex flex-col gap-0.5">
+<span class="font-label-sm text-label-sm text-on-surface">NVIDIA RTX 4090 (24GB)</span>
+<span class="font-label-sm text-label-sm text-outline">VRAM Alloc: 3.84 / 24.00 GB</span>
+</div>
+<div class="w-full bg-surface-container-highest rounded-full h-1 mt-1 overflow-hidden">
+<div class="bg-primary h-1 rounded-full w-[16%]"></div>
+</div>
+</div>
+</div>
+<!-- Sidebar Bottom: CTA & Footers from JSON -->
+<div class="flex flex-col gap-space-sm pt-space-sm border-t border-outline-variant">
+<!-- Export Run Weights CTA from JSON -->
+<button class="w-full flex items-center justify-center gap-space-xs py-space-sm px-space-md bg-surface-container text-on-surface hover:bg-surface-container-high transition-colors duration-150 rounded font-label-md text-label-md font-semibold border border-outline-variant">
+<span class="material-symbols-outlined text-[18px]" data-icon="file_download">file_download</span>
+        Export Run Weights
+      </button>
+<!-- Footer Tab Links (Documentation, Settings) -->
+<div class="flex flex-col gap-1">
+<a class="flex items-center gap-space-sm px-space-md py-1.5 text-on-surface-variant rounded hover:bg-surface-container text-label-md font-label-md transition-colors duration-150" href="#">
+<span class="material-symbols-outlined text-[18px]" data-icon="menu_book">menu_book</span>
+          Documentation
+        </a>
+<a class="flex items-center gap-space-sm px-space-md py-1.5 text-on-surface-variant rounded hover:bg-surface-container text-label-md font-label-md transition-colors duration-150" href="#">
+<span class="material-symbols-outlined text-[18px]" data-icon="settings">settings</span>
+          Settings
+        </a>
+</div>
+</div>
+</aside>
+<!-- ========================================================================= -->
+<!-- MAIN WORKSPACE VIEWPORT (Offset for Fixed Sidebar w-72)                   -->
+<!-- ========================================================================= -->
+<div class="ml-72 flex-1 flex flex-col min-w-0 bg-background">
+<!-- ===================================================================== -->
+<!-- SHARED COMPONENT: TopNavBar (Anchored via JSON Schema)                -->
+<!-- ===================================================================== -->
+<header class="sticky top-0 z-30 flex items-center justify-between px-gutter h-14 w-full bg-surface-container-lowest dark:bg-inverse-surface border-b border-outline-variant dark:border-outline shadow-sm dark:shadow-none">
+<!-- Left: Breadcrumb / Model Run Info -->
+<div class="flex items-center gap-space-md">
+<div class="flex items-center gap-space-xs font-label-md text-label-md">
+<span class="text-on-surface-variant">Workspaces</span>
+<span class="text-outline">/</span>
+<span class="text-primary font-semibold">Universal Restoration</span>
+</div>
+<div class="hidden xl:flex items-center gap-space-sm ml-space-sm">
+<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-label-sm font-label-sm bg-surface-container-low text-on-surface border border-outline-variant">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary animate-pulse"></span>
+            Pipeline Ready (PyTorch 2.3.1 - CUDA:0)
+          </span>
+<span class="px-2 py-0.5 rounded text-label-sm font-label-sm bg-surface-container text-primary font-semibold border border-primary-fixed">
+            128 × 128 Fixed Tensor
+          </span>
+</div>
+</div>
+<!-- Right: Secondary & Primary Actions, Trailing Icons -->
+<div class="flex items-center gap-space-sm">
+<!-- Checkpoint Selector Dropdown -->
+<div class="relative inline-flex items-center">
+<select class="appearance-none bg-surface-container-lowest border border-outline-variant text-on-surface text-label-sm font-label-sm py-1.5 pl-2.5 pr-7 rounded cursor-pointer hover:border-primary focus:outline-none focus:ring-1 focus:ring-primary">
+<option selected="">ckpt_universal_ep120_vitb16.pt (438MB)</option>
+<option>ckpt_universal_ep080_baseline.pt (438MB)</option>
+<option>ckpt_synthetic_ablation_blind.pt (210MB)</option>
+</select>
+<span class="material-symbols-outlined text-[16px] pointer-events-none absolute right-2 text-on-surface-variant" data-icon="expand_more">expand_more</span>
+</div>
+<!-- Reload Checkpoint Action from JSON -->
+<button class="flex items-center gap-1 px-space-sm py-1.5 bg-surface-container-lowest hover:bg-surface-container text-on-surface border border-outline-variant rounded font-label-md text-label-md transition-colors duration-150" title="Reload Checkpoint">
+<span class="material-symbols-outlined text-[18px]" data-icon="refresh">refresh</span>
+<span class="hidden sm:inline">Reload Checkpoint</span>
+</button>
+<!-- Primary Action: Run Inference from JSON -->
+<button class="flex items-center gap-1.5 px-space-md py-1.5 bg-primary-container hover:bg-tertiary-container text-on-primary rounded font-label-md text-label-md font-semibold shadow-sm transition-all duration-150">
+<span class="material-symbols-outlined text-[18px]" data-icon="play_arrow">play_arrow</span>
+<span>Run Inference</span>
+<kbd class="ml-1 text-[10px] font-label-sm bg-primary/40 px-1 py-0.5 rounded opacity-90">⌘↵</kbd>
+</button>
+<!-- Trailing action icons from JSON: terminal, tune, help_outline -->
+<div class="flex items-center border-l border-outline-variant pl-space-sm gap-1">
+<button class="p-1.5 rounded hover:bg-surface-container text-on-surface-variant transition-colors" title="Toggle PyTorch Logging Console">
+<span class="material-symbols-outlined text-[20px]" data-icon="terminal">terminal</span>
+</button>
+<button class="p-1.5 rounded hover:bg-surface-container text-on-surface-variant transition-colors" title="Fine Parameter Tuning">
+<span class="material-symbols-outlined text-[20px]" data-icon="tune">tune</span>
+</button>
+<button class="p-1.5 rounded hover:bg-surface-container text-on-surface-variant transition-colors" title="CVPR Benchmark Help">
+<span class="material-symbols-outlined text-[20px]" data-icon="help_outline">help_outline</span>
+</button>
+</div>
+</div>
+</header>
+<!-- ===================================================================== -->
+<!-- WORKBENCH BODY: 2-COLUMN SPLIT GRID                                  -->
+<!-- ===================================================================== -->
+<main class="flex-1 p-gutter grid grid-cols-1 xl:grid-cols-12 gap-gutter items-start">
+<!-- =================================================================== -->
+<!-- LEFT / STAGING COLUMN (5 Cols on XL)                               -->
+<!-- =================================================================== -->
+<section class="xl:col-span-5 flex flex-col gap-gutter">
+<!-- Card 1: Sample & Input Ingestion -->
+<div class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-space-md flex flex-col gap-space-md">
+<div class="flex items-center justify-between border-b border-outline-variant pb-space-sm">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-primary text-[20px]" data-icon="image_search">image_search</span>
+<h2 class="text-headline-sm font-headline-sm text-on-surface">Input Tensor Ingestion</h2>
+</div>
+<span class="text-label-sm font-label-sm text-outline">SHAPE: [1, 3, 128, 128]</span>
+</div>
+<!-- Drag and Drop Canvas Area -->
+<div class="relative border-2 border-dashed border-outline-variant hover:border-primary rounded-xl p-space-md flex flex-col items-center justify-center text-center bg-surface-container-low/40 transition-colors duration-150 cursor-pointer">
+<div class="w-12 h-12 rounded-full bg-surface-container flex items-center justify-center text-primary mb-2">
+<span class="material-symbols-outlined text-[26px]" data-icon="cloud_upload">cloud_upload</span>
+</div>
+<p class="text-body-md font-body-md font-medium text-on-surface">
+              Drop degraded test image or <span class="text-primary underline">browse</span>
+</p>
+<p class="text-body-sm font-body-sm text-on-surface-variant mt-1">
+              Normalized to [-1.0, 1.0] range • PNG, JPG, TIFF up to 20MB
+            </p>
+<div class="mt-space-sm inline-flex items-center gap-1.5 px-2 py-0.5 bg-surface-container-high rounded text-label-sm font-label-sm text-primary font-semibold">
+<span class="material-symbols-outlined text-[14px]" data-icon="aspect_ratio">aspect_ratio</span>
+              Latent Fixed Res: 128 × 128 px
+            </div>
+</div>
+<!-- Quick Benchmark Preset Thumbnails -->
+<div class="flex flex-col gap-1.5">
+<div class="flex items-center justify-between">
+<span class="text-label-sm font-label-sm text-on-surface-variant uppercase tracking-wider">Evaluation Benchmark Presets</span>
+<span class="text-label-sm font-label-sm text-primary font-medium">Reset to Baseline</span>
+</div>
+<div class="grid grid-cols-3 gap-2">
+<!-- Preset 1 (Active Selected) -->
+<button class="relative rounded-lg p-1.5 border-2 border-primary bg-primary-fixed/20 flex flex-col items-center gap-1 transition-all text-left">
+<div class="w-full aspect-square bg-surface-container rounded overflow-hidden flex items-center justify-center relative">
+<img class="w-full h-full object-cover" data-alt="A clinical, front-facing close-up portrait of an ambiguous human face taken under bright, neutral studio lighting for an academic computer vision benchmark dataset. High key, razor-sharp details in 128x128 resolution showcasing subtle facial contours, skin texture, and neutral expression. Crisp composition adhering strictly to high-standard research standards." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDVhWkmWi5bNAWgYhUXsMEXe-rQS48h1IzuGU9uadNRGxulXEZHs-aoD7pDUiMfsIJ1A6o-4ZKIcAo7zFtfAPMbCAqdholje4EUIlKWq1GFKsgLSdfa9gRLXVON1VihnNHj-hR2mW1LrEqGd35SaF5S8Jm75xir2BlZfg9txa8Cx0u5VFqZlq2YPwnpo9YF-VNrQguFD87g18h3z-64DmueJ9WHsH0SDHFV7AnyZWxnDAtzdU9e0fNm80s93fpjPVx0CTS8RrmsY9QZ"/>
+<span class="absolute top-1 left-1 bg-on-background/80 text-surface text-[9px] font-label-sm px-1 rounded">1042</span>
+</div>
+<div class="w-full truncate text-[11px] font-label-md font-semibold text-primary">CelebA-HQ #1042</div>
+<div class="w-full truncate text-[9px] font-label-sm text-on-surface-variant">Ground Truth Ref</div>
+</button>
+<!-- Preset 2 -->
+<button class="rounded-lg p-1.5 border border-outline-variant hover:border-primary bg-surface-container-lowest flex flex-col items-center gap-1 transition-all text-left group">
+<div class="w-full aspect-square bg-surface-container rounded overflow-hidden flex items-center justify-center relative">
+<img class="w-full h-full object-cover opacity-85 group-hover:opacity-100" data-alt="An academic computer vision research portrait with deliberate synthetic impulse noise and mild blur. Neutral studio lighting illuminates the human subject centered in frame against a light ivory backdrop. Clean, scientific benchmarking aesthetic with high fidelity facial features visible beneath degradation." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDDpBAcNhGTEiWNZIosQBt5iREJi3-E54qzU18kk8MzrZgepP3soj3zyTvFkHucj7gJzsN5O7LVl8aKevwLPQ4owIUXr4CZch0Sn7J_boQkTeNcx0n-nwwshZTVyja-dT9NArNmz2zG1VN-mG-wxBKwQvjmiS-BcUQVzmN_0aK1kgkkOfoGuP-rAgv8ryoi029Zp97YbZBno6Pq_WjN40jua86WJG_jZ-aLWsPnG0zCqeS5vfn0dwuMwi_MpgC28SYJWR14Es62fvVS"/>
+<span class="absolute top-1 left-1 bg-on-background/80 text-surface text-[9px] font-label-sm px-1 rounded">089</span>
+</div>
+<div class="w-full truncate text-[11px] font-label-md font-medium text-on-surface">LFW #089</div>
+<div class="w-full truncate text-[9px] font-label-sm text-outline">Natural Low-Res</div>
+</button>
+<!-- Preset 3 -->
+<button class="rounded-lg p-1.5 border border-outline-variant hover:border-primary bg-surface-container-lowest flex flex-col items-center gap-1 transition-all text-left group">
+<div class="w-full aspect-square bg-surface-container rounded overflow-hidden flex items-center justify-center relative">
+<img class="w-full h-full object-cover opacity-85 group-hover:opacity-100" data-alt="Standard FFHQ academic research dataset headshot of an individual with soft ambient lighting and balanced facial proportions. Sharp, controlled photographic tone suited for deep neural network testing. Crisp edges and warm ivory undertones representing benchmark test subject 412." src="https://lh3.googleusercontent.com/aida-public/AB6AXuB-EQ6pepwv_8x50ygy6XgGya6qhZdoBXu_LQ04FaoFkzVE2hz_63guhOUDZTOGX3IW4j70piFOcUmFBJXgD8LtA56Yl6SpkE7nHrC9p0ydRItCkUa94UzArm5XDdrBOv981Vfk0be6TYAJIVaKB_3MQjngBr92_iN3DtXb0CpcpfjbJMwQlCGoHLpK0FFH499415Bjf4886v7e_eIug7-u_GZMDiv5uJaAoae49h2e0wr4jYSCFj06D9Py4xxj1-YMnGLA7RwthD3i"/>
+<span class="absolute top-1 left-1 bg-on-background/80 text-surface text-[9px] font-label-sm px-1 rounded">412</span>
+</div>
+<div class="w-full truncate text-[11px] font-label-md font-medium text-on-surface">FFHQ #412</div>
+<div class="w-full truncate text-[9px] font-label-sm text-outline">High-Freq Detail</div>
+</button>
+</div>
+</div>
+</div>
+<!-- Card 2: Damage Mode & Synthetic Corruption Matrix -->
+<div class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-space-md flex flex-col gap-space-md">
+<div class="flex items-center justify-between border-b border-outline-variant pb-space-sm">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-primary text-[20px]" data-icon="grain">grain</span>
+<h2 class="text-headline-sm font-headline-sm text-on-surface">Degradation Protocol</h2>
+</div>
+<!-- Segmented Pill Toggle -->
+<div class="bg-surface-container-low p-0.5 rounded-full border border-outline-variant flex items-center">
+<button class="px-2.5 py-1 text-label-sm font-label-sm text-on-surface-variant rounded-full hover:text-on-surface">
+                Real-World
+              </button>
+<button class="px-2.5 py-1 text-label-sm font-label-sm bg-surface-container-lowest text-primary font-semibold rounded-full shadow-xs">
+                Synthetic (Active)
+              </button>
+</div>
+</div>
+<!-- Synthetic Corruption Matrix Cards -->
+<div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+<!-- Corruption 1 -->
+<button class="p-2 rounded-lg border border-outline-variant hover:border-outline text-left bg-surface-container-lowest flex flex-col gap-1 transition-all">
+<span class="text-label-sm font-label-sm font-semibold text-on-surface">Clean Base</span>
+<span class="text-[10px] font-label-sm text-outline">σ = 0.0</span>
+<span class="w-full h-1 bg-surface-container rounded mt-1"></span>
+</button>
+<!-- Corruption 2 (Active Selected) -->
+<button class="p-2 rounded-lg border-2 border-primary bg-primary-fixed/20 text-left flex flex-col gap-1 shadow-xs transition-all">
+<span class="text-label-sm font-label-sm font-semibold text-primary">Salt &amp; Pepper</span>
+<span class="text-[10px] font-label-sm text-primary font-mono">Density d=0.15</span>
+<span class="w-full h-1 bg-primary rounded mt-1"></span>
+</button>
+<!-- Corruption 3 -->
+<button class="p-2 rounded-lg border border-outline-variant hover:border-outline text-left bg-surface-container-lowest flex flex-col gap-1 transition-all">
+<span class="text-label-sm font-label-sm font-semibold text-on-surface">Gauss Blur</span>
+<span class="text-[10px] font-label-sm text-outline">Kernel σ=2.4</span>
+<span class="w-full h-1 bg-surface-container rounded mt-1"></span>
+</button>
+<!-- Corruption 4 -->
+<button class="p-2 rounded-lg border border-outline-variant hover:border-outline text-left bg-surface-container-lowest flex flex-col gap-1 transition-all">
+<span class="text-label-sm font-label-sm font-semibold text-on-surface">Occlusion</span>
+<span class="text-[10px] font-label-sm text-outline">32×32 Mask</span>
+<span class="w-full h-1 bg-surface-container rounded mt-1"></span>
+</button>
+</div>
+<!-- Parameter Slider for Density -->
+<div class="p-space-sm bg-surface-container-low/50 rounded-lg border border-outline-variant flex flex-col gap-2">
+<div class="flex items-center justify-between text-label-sm font-label-sm">
+<label class="text-on-surface font-medium" for="density-slider">Impulse Noise Density (d)</label>
+<span class="font-mono text-primary font-bold bg-surface-container-lowest px-2 py-0.5 rounded border border-outline-variant">0.150</span>
+</div>
+<input class="w-full h-1.5 bg-surface-container rounded-lg appearance-none cursor-pointer accent-primary" id="density-slider" max="0.50" min="0.01" step="0.01" type="range" value="0.15"/>
+<div class="flex justify-between text-[10px] font-label-sm text-outline">
+<span>0.01 (Subtle speckles)</span>
+<span>0.25 (Heavy distortion)</span>
+<span>0.50 (Max destruction)</span>
+</div>
+</div>
+</div>
+<!-- Card 3: Hyperparameter Steppers & Run Action -->
+<div class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-space-md flex flex-col gap-space-md">
+<div class="flex items-center justify-between border-b border-outline-variant pb-space-sm">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-primary text-[20px]" data-icon="tune">tune</span>
+<h2 class="text-headline-sm font-headline-sm text-on-surface">Inference Hyperparameters</h2>
+</div>
+<span class="text-label-sm font-label-sm text-outline font-mono">DDPM / Cold Diffusion</span>
+</div>
+<div class="grid grid-cols-3 gap-2">
+<!-- Param 1 -->
+<div class="flex flex-col gap-1">
+<label class="text-label-sm font-label-sm text-on-surface-variant truncate">Diffusion Steps</label>
+<div class="flex items-center border border-outline-variant rounded bg-surface-container-lowest overflow-hidden">
+<input class="w-full text-center font-label-sm text-label-sm py-1 focus:outline-none bg-transparent" type="text" value="30"/>
+</div>
+</div>
+<!-- Param 2 -->
+<div class="flex flex-col gap-1">
+<label class="text-label-sm font-label-sm text-on-surface-variant truncate">Guidance Scale</label>
+<div class="flex items-center border border-outline-variant rounded bg-surface-container-lowest overflow-hidden">
+<input class="w-full text-center font-label-sm text-label-sm py-1 focus:outline-none bg-transparent" type="text" value="2.50"/>
+</div>
+</div>
+<!-- Param 3 -->
+<div class="flex flex-col gap-1">
+<label class="text-label-sm font-label-sm text-on-surface-variant truncate">Seed (RNG)</label>
+<div class="flex items-center border border-outline-variant rounded bg-surface-container-lowest overflow-hidden">
+<input class="w-full text-center font-label-sm text-label-sm py-1 focus:outline-none bg-transparent" type="text" value="202504"/>
+</div>
+</div>
+</div>
+<!-- Execution CTA -->
+<button class="w-full py-2.5 px-space-md bg-primary hover:bg-tertiary text-on-primary rounded font-label-lg text-label-lg font-semibold shadow flex items-center justify-center gap-2 transition-all">
+<span class="material-symbols-outlined text-[20px]" data-icon="auto_fix_high">auto_fix_high</span>
+<span>Run Universal Restoration</span>
+<span class="text-[11px] font-mono opacity-80 border-l border-on-primary/30 pl-2">⌘ + Enter</span>
+</button>
+</div>
+</section>
+<!-- =================================================================== -->
+<!-- RIGHT / EVALUATION & OUTPUT COLUMN (7 Cols on XL)                  -->
+<!-- =================================================================== -->
+<section class="xl:col-span-7 flex flex-col gap-gutter">
+<!-- Metrics Telemetry Ribbon -->
+<div class="bg-surface-container-lowest rounded-xl border border-outline-variant p-space-sm shadow-sm flex flex-wrap items-center justify-between gap-2">
+<div class="flex items-center gap-2">
+<span class="inline-flex items-center gap-1.5 text-label-sm font-label-sm text-on-surface font-semibold bg-surface-container-low px-2.5 py-1 rounded border border-outline-variant">
+<span class="material-symbols-outlined text-[16px] text-primary" data-icon="timer">timer</span>
+              Latency: 14.8 ms (RTX 4090)
+            </span>
+<span class="text-label-sm font-label-sm text-outline hidden md:inline">|</span>
+<span class="text-label-sm font-label-sm text-on-surface-variant hidden md:inline">Batch: 1</span>
+</div>
+<!-- Benchmark Metrics Pills -->
+<div class="flex items-center gap-2 font-label-sm text-label-sm">
+<span class="bg-[#f0fdfa] border border-[#99f6e4] text-[#0d9488] px-2.5 py-0.5 rounded font-semibold">
+              PSNR: +32.84 dB
+            </span>
+<span class="bg-surface-container-low border border-outline-variant text-on-surface px-2.5 py-0.5 rounded font-medium">
+              SSIM: 0.941
+            </span>
+<span class="bg-surface-container-low border border-outline-variant text-on-surface px-2.5 py-0.5 rounded font-medium">
+              LPIPS: 0.082
+            </span>
+</div>
+</div>
+<!-- Canvas Inspection Viewport: Side-by-Side Dual Visualizer -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-space-md">
+<!-- Viewport 1: Degraded Input Tensor -->
+<div class="bg-surface-container-lowest rounded-xl border border-outline-variant overflow-hidden shadow-sm flex flex-col">
+<div class="h-10 px-3 border-b border-outline-variant flex items-center justify-between bg-surface-container-low/40">
+<div class="flex items-center gap-1.5">
+<span class="w-2 h-2 rounded-full bg-error"></span>
+<span class="text-label-sm font-label-sm font-semibold text-on-surface">INPUT CORRUPTED</span>
+</div>
+<span class="text-label-sm font-label-sm font-mono text-outline">PSNR: 18.20 dB</span>
+</div>
+<!-- Visual Canvas Container -->
+<div class="relative aspect-square w-full bg-neutral-900 flex items-center justify-center p-4">
+<div class="relative w-full h-full max-w-[320px] max-h-[320px] rounded border border-outline shadow-inner overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="Close up photographic crop of an academic facial dataset subject with severe synthetic impulse noise and pepper grain degradation artifacts covering 15% of the frame. The underlying face is recognizable but heavily degraded under bright controlled research-grade studio lighting. Clear visual cues of high spatial noise on a warm ivory substrate." src="https://lh3.googleusercontent.com/aida-public/AB6AXuA1TcBzCBdBvdxj-rN84QWsNTTDIvBbDb_SwLAZZFK8k9mMUOTt4xRA7YCJqRq1ZZgAh5Aax5ABLpxEwYQUBEp9HKko4c-pNvaGxWoQkgrWdJZnNrdUxbNfcxjV6U3KrSA8pisf-Ir7SKGuriGY1lnl9R7-01CFY20xmHBEmmYzOku52oiLC3nfeIJxzGaPM0l_XfMyZeCizyfi7AwM2hxc4szqabjxlOm0_fOCrFTKDflwARSgnEQdVdcmMPLndJriT4US_QcBZLGv"/>
+<!-- Overlay Badges -->
+<div class="absolute top-2 left-2 bg-on-background/85 backdrop-blur-xs text-white text-[10px] font-label-sm px-2 py-0.5 rounded">
+                  Salt &amp; Pepper (d=0.15)
+                </div>
+<div class="absolute bottom-2 right-2 bg-on-background/85 backdrop-blur-xs text-white text-[10px] font-label-sm px-2 py-0.5 rounded">
+                  128 × 128 px
+                </div>
+</div>
+</div>
+<!-- Footnote Card Info -->
+<div class="p-2.5 border-t border-outline-variant text-label-sm font-label-sm flex items-center justify-between text-on-surface-variant">
+<span>Sensor Noise Emulation</span>
+<button class="hover:text-primary flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]" data-icon="zoom_in">zoom_in</span>
+                Inspect 400%
+              </button>
+</div>
+</div>
+<!-- Viewport 2: Restored Clean Output -->
+<div class="bg-surface-container-lowest rounded-xl border-2 border-primary/40 overflow-hidden shadow-sm flex flex-col">
+<div class="h-10 px-3 border-b border-outline-variant flex items-center justify-between bg-primary-fixed/30">
+<div class="flex items-center gap-1.5">
+<span class="w-2 h-2 rounded-full bg-secondary"></span>
+<span class="text-label-sm font-label-sm font-semibold text-primary">RESTORED OUTPUT</span>
+</div>
+<span class="text-label-sm font-label-sm font-mono text-secondary font-bold">+14.64 dB GAIN</span>
+</div>
+<!-- Visual Canvas Container -->
+<div class="relative aspect-square w-full bg-neutral-900 flex items-center justify-center p-4">
+<div class="relative w-full h-full max-w-[320px] max-h-[320px] rounded border border-primary/60 shadow-inner overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="Publication-ready restored high-fidelity portrait of the human subject with perfectly reconstructed skin textures, crisp eye reflections, and all impulse noise fully eliminated by a Vision Transformer. Bright, clean academic lighting, warm ivory undertones, and mathematically pristine edges at 128x128 resolution." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCoYbjGEiYki9fxaZ9W41lgCoBS3IuvQQG_s6oKUOk3gTvE-1PfiwptZyfHkFtYLf5fLRUlNMSjfkL1fbbumUF2MB0WAnNin2LjdPCfGaSOGr7zOeJC3qA7LnnoUypabgmo3iN-CMXE86DaCuxc_siw_50I-rR_Wl65FzgQSltPQdBUgPeCgHMvBmo28hep4nsSPr9pgbfKWIxhEZ9J3eYUvqfOLMFeqyCxdQOchAUbO2NJjDKDtXoNo0WPIRkZ8iOui1W_0X1dksPi"/>
+<!-- Overlay Badges -->
+<div class="absolute top-2 left-2 bg-primary/90 text-on-primary text-[10px] font-label-sm px-2 py-0.5 rounded font-semibold">
+                  Epoch 120 (ViT-B/16)
+                </div>
+<div class="absolute bottom-2 right-2 bg-secondary/90 text-on-secondary text-[10px] font-label-sm px-2 py-0.5 rounded font-semibold">
+                  PSNR: 32.84 dB
+                </div>
+</div>
+</div>
+<!-- Footnote Card Info -->
+<div class="p-2.5 border-t border-outline-variant text-label-sm font-label-sm flex items-center justify-between text-on-surface-variant">
+<span class="text-secondary font-medium">LPIPS: 0.082 (High Perceptual)</span>
+<button class="hover:text-primary flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]" data-icon="compare">compare</span>
+                Diff Slider
+              </button>
+</div>
+</div>
+</div>
+<!-- Analytical Action Bar for Results -->
+<div class="bg-surface-container-lowest rounded-xl border border-outline-variant p-space-sm shadow-sm flex flex-wrap items-center justify-between gap-2">
+<div class="flex items-center gap-2">
+<!-- Primary Download -->
+<button class="px-space-md py-1.5 bg-primary text-on-primary hover:bg-tertiary rounded text-label-md font-label-md font-semibold flex items-center gap-1.5 transition-colors">
+<span class="material-symbols-outlined text-[18px]" data-icon="download">download</span>
+              Download Restored PNG (128×128)
+            </button>
+<!-- Export Side by Side -->
+<button class="px-space-md py-1.5 bg-surface-container-lowest text-on-surface hover:bg-surface-container border border-outline-variant rounded text-label-md font-label-md font-medium flex items-center gap-1.5 transition-colors">
+<span class="material-symbols-outlined text-[18px]" data-icon="vertical_split">vertical_split</span>
+              Export Side-by-Side PNG
+            </button>
+</div>
+<!-- Tertiary Array Copy -->
+<button class="px-space-sm py-1.5 text-on-surface-variant hover:text-primary text-label-sm font-label-sm flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]" data-icon="data_array">data_array</span>
+            Copy Tensor Array (PyTorch)
+          </button>
+</div>
+<!-- System Verification, Checkpoint Checksum & Diagnostics Panel -->
+<div class="bg-surface-container-low/60 rounded-xl border border-outline-variant p-space-md flex flex-col gap-space-sm">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-secondary text-[18px]" data-icon="verified">verified</span>
+<span class="text-label-md font-label-md font-bold text-on-surface">Diagnostic Self-Test Passed • Model Verified (CVPR-2025 Mode)</span>
+</div>
+<span class="text-label-sm font-label-sm text-outline font-mono">HASH: 7f3a9e...e41b</span>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-label-sm font-label-sm">
+<div class="p-2 bg-surface-container-lowest rounded border border-outline-variant flex flex-col">
+<span class="text-outline uppercase text-[10px]">Checkpoint SHA256</span>
+<span class="font-mono text-on-surface truncate">9a42f534be8c8941076b1f20d2a84e56598c77db02c</span>
+</div>
+<div class="p-2 bg-surface-container-lowest rounded border border-outline-variant flex flex-col">
+<span class="text-outline uppercase text-[10px]">Inference Jitter (100 runs)</span>
+<span class="font-mono text-secondary font-medium">±0.42 ms std • 0 dropped frames</span>
+</div>
+</div>
+<div class="flex items-center gap-2 text-body-sm font-body-sm text-on-surface-variant pt-1">
+<span class="material-symbols-outlined text-[16px] text-outline" data-icon="info">info</span>
+<span>TorchScript CPU fallback available automatically if CUDA accelerator is unseated or throttled.</span>
+</div>
+</div>
+<!-- ================================================================= -->
+<!-- SNEAK-PEEK / CALLOUTS FOR OTHER CVPR WORKSPACES                   -->
+<!-- ================================================================= -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-space-sm pt-space-xs">
+<!-- Callout 1: Hard-Routed Restoration Sneak Peek -->
+<div class="p-space-sm bg-surface-container-lowest rounded-lg border border-outline-variant flex flex-col gap-1.5">
+<div class="flex items-center justify-between">
+<span class="text-label-sm font-label-sm font-bold text-on-surface">Hard Router Probabilities</span>
+<span class="material-symbols-outlined text-[16px] text-outline" data-icon="alt_route">alt_route</span>
+</div>
+<p class="text-body-sm font-body-sm text-on-surface-variant text-[11px]">
+              Classifier assigns discrete path:
+            </p>
+<div class="flex items-center justify-between text-[11px] font-mono mt-0.5">
+<span>Expert #2 (Impulse)</span>
+<span class="text-primary font-bold">p=0.92</span>
+</div>
+<div class="w-full bg-surface-container rounded-full h-1">
+<div class="bg-primary h-1 rounded-full w-[92%]"></div>
+</div>
+</div>
+<!-- Callout 2: Soft MoE Weights Sneak Peek -->
+<div class="p-space-sm bg-surface-container-lowest rounded-lg border border-outline-variant flex flex-col gap-1.5">
+<div class="flex items-center justify-between">
+<span class="text-label-sm font-label-sm font-bold text-on-surface">Soft MoE Dynamic Gating</span>
+<span class="material-symbols-outlined text-[16px] text-outline" data-icon="hub">hub</span>
+</div>
+<p class="text-body-sm font-body-sm text-on-surface-variant text-[11px]">
+              Continuous latent blending:
+            </p>
+<div class="grid grid-cols-4 gap-1 text-[10px] font-mono text-center mt-0.5">
+<span class="bg-surface-container p-0.5 rounded">w1: 0.1</span>
+<span class="bg-primary-fixed p-0.5 rounded font-bold text-primary">w2: 0.6</span>
+<span class="bg-surface-container p-0.5 rounded">w3: 0.2</span>
+<span class="bg-surface-container p-0.5 rounded">w4: 0.1</span>
+</div>
+</div>
+<!-- Callout 3: Face-to-Sketch Styles Preview -->
+<div class="p-space-sm bg-surface-container-lowest rounded-lg border border-outline-variant flex flex-col gap-1.5">
+<div class="flex items-center justify-between">
+<span class="text-label-sm font-label-sm font-bold text-on-surface">Face-to-Sketch Synthesis</span>
+<span class="material-symbols-outlined text-[16px] text-outline" data-icon="draw">draw</span>
+</div>
+<p class="text-body-sm font-body-sm text-on-surface-variant text-[11px]">
+              Latent pencil styles 1, 2, 3:
+            </p>
+<div class="flex items-center gap-1.5 mt-0.5">
+<span class="text-[10px] font-label-sm px-1.5 py-0.5 bg-surface-container rounded text-on-surface">Charcoal</span>
+<span class="text-[10px] font-label-sm px-1.5 py-0.5 bg-surface-container rounded text-on-surface">Contour</span>
+<span class="text-[10px] font-label-sm px-1.5 py-0.5 bg-secondary-container/40 rounded text-secondary font-semibold">Webcam Live</span>
+</div>
+</div>
+</div>
+</section>
+</main>
+</div>
+<!-- Inline Script for Micro-Interactions (Slider update, Keyboard Shortcut) -->
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const densitySlider = document.getElementById('density-slider');
+      if (densitySlider) {
+        densitySlider.addEventListener('input', (e) => {
+          const display = densitySlider.previousElementSibling?.querySelector('span');
+          if (display) {
+            display.textContent = parseFloat(e.target.value).toFixed(3);
+          }
+        });
+      }
+
+      // Keyboard Shortcut ⌘+Enter or Ctrl+Enter trigger simulated inference
+      window.addEventListener('keydown', (e) => {
+        if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+          e.preventDefault();
+          const btn = document.querySelector('button[class*="bg-primary"]');
+          if (btn) {
+            btn.classList.add('opacity-75', 'scale-[0.99]');
+            setTimeout(() => {
+              btn.classList.remove('opacity-75', 'scale-[0.99]');
+            }, 180);
+          }
+        }
+      });
+    });
+  </script>
+</body></html>

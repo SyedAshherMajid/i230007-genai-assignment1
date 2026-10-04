@@ -1,0 +1,17 @@
+{
+  "id": "syedashher/genai-a1-fs2k-baseline",
+  "title": "GenAI A1 FS2K Baseline",
+  "code_file": "train_fs2k.ipynb",
+  "language": "python",
+  "kernel_type": "notebook",
+  "is_private": true,
+  "enable_gpu": true,
+  "enable_internet": true,
+  "dataset_sources": [
+    "syedashher/genai-a1-fs2k-private-inputs",
+    "syedashher/genai-a1-private-training-code"
+  ],
+  "competition_sources": [],
+  "kernel_sources": [],
+  "model_sources": []
+}

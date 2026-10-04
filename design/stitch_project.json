@@ -1,0 +1,15 @@
+{
+  "content": [
+    {
+      "text": "{\"name\":\"projects/16665216233764559974\",\"title\":\"Restore & Sketch Lab - Generative AI Assignment 1\",\"visibility\":\"PRIVATE\",\"projectType\":\"PROJECT_DESIGN\",\"origin\":\"STITCH\"}",
+      "type": "text"
+    }
+  ],
+  "structuredContent": {
+    "name": "projects/16665216233764559974",
+    "origin": "STITCH",
+    "projectType": "PROJECT_DESIGN",
+    "title": "Restore & Sketch Lab - Generative AI Assignment 1",
+    "visibility": "PRIVATE"
+  }
+}

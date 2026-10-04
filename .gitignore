@@ -27,4 +27,17 @@ planning/gpu_probe_results.json
 planning/audit_environment.py
 planning/gpu_probe.py
 wheelhouse/
+tools/tectonic.exe
+tools/*.zip
+cloud/upload/
+cloud/code_upload/
+cloud/output/
+cloud/probe_output/
+cloud/pulled/
+cloud/kaggle_kernel/*.ipynb
+cloud/kaggle_probe/*.ipynb
+design/*response.json
+report/build/
+
+
 

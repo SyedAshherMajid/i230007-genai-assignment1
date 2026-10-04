@@ -1,0 +1,90 @@
+\documentclass[conference]{IEEEtran}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{amsmath}
+\usepackage{url}
+\usepackage{hyperref}
+
+\title{Restoration and Style-Conditioned Synthesis with Compact Generative Models}
+\author{\IEEEauthorblockN{Syed Ashher Majid (23i-0007)}
+\IEEEauthorblockA{Department of Computer Science\\FAST NUCES, Islamabad\\Generative AI, CS(A)\\Instructor: Dr Akhtar Jamil}}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+This work studies four related image-to-image systems at a shared 128 $\times$ 128 resolution: a universal pet-image autoencoder, a classifier with corruption-specific restoration experts, a differentiable soft mixture of those experts, and a style-conditioned face-to-sketch generator. The first three tasks use identical Oxford-IIIT Pet splits and reproducible image corruptions; the fourth uses paired FS2K photographs and sketches. Model choice is based on held-out validation data, with official test data reserved for a final evaluation. We provide the source code, experiment records, ONNX models, and a browser application for inspecting predictions.
+\end{abstract}
+
+\begin{IEEEkeywords}
+image restoration, autoencoder, mixture of experts, conditional GAN, structural similarity
+\end{IEEEkeywords}
+
+\section{Introduction}
+Image restoration must improve damaged images without unnecessarily altering clean ones. A single autoencoder can learn broad restoration behavior, but corruption-specific networks may exploit more focused training signals. Hard routing chooses one specialist based on a predicted corruption class; its quality can fall when the classifier chooses the wrong branch. Soft routing combines identity and specialist outputs with learned weights, which allows less certain predictions to blend multiple alternatives. We compare these strategies on the same Oxford-IIIT Pet inputs and held-out cases. A separate paired task maps face photographs to three annotated sketch styles.
+
+\section{Related Work}
+The Oxford-IIIT Pet dataset introduced by Parkhi \emph{et al.} contains images of 37 cat and dog breeds~\cite{parkhi2012}. Structural similarity (SSIM) compares image structure, luminance and contrast rather than relying only on pixelwise error~\cite{wang2004}. We combine SSIM with mean absolute error (MAE) because the latter provides a direct reconstruction penalty. The mixture-of-experts idea uses a gate to choose or weight specialist predictors~\cite{jacobs1991}. The paired image-to-image method of Isola \emph{et al.} motivates a U-Net generator, conditional patch discriminator, and reconstruction term for sketch synthesis~\cite{isola2017}. FS2K supplies paired photographs and three professionally drawn sketch styles~\cite{fan2022}. Optuna supplies reproducible bounded hyperparameter studies~\cite{akiba2019}.
+
+\section{Data and Evaluation Protocol}
+\subsection{Oxford-IIIT Pet}
+We preserve the official 3,680-image train/validation partition and 3,669-image test partition. The former is stratified by breed into 2,944 training and 736 validation images with seed 42. All images are converted to RGB and resized to 128 $\times$ 128 using bicubic interpolation. Tasks 1--3 share these exact IDs. Clean training images are damaged dynamically. The four labels are clean, salt-and-pepper noise, Gaussian blur, and black rectangle occlusion. Noise replaces a spatial pixel across all RGB channels, with training probability sampled from 0.02 to 0.15. Blur uses a sampled kernel of size 3, 5, or 7 and Gaussian standard deviation between 0.5 and 2.5. One to three black rectangles cover approximately 10--35\% of the image, with coverage measured as a union of pixels.
+
+For deterministic validation and testing, we store a corruption recipe for every image: one clean case and low, medium, and high severity for each damaged class. This produces 7,360 validation and 36,690 final test cases. Seeds, blur parameters, rectangle coordinates and actual coverage are recorded. The clean target is never modified. Every compared restoration system sees the same damaged inputs.
+
+\subsection{FS2K}
+We use the authors' official annotations to pair 1,058 training and 1,046 test photographs with sketches. A style-stratified 15\% validation split of the official training portion gives 899 training and 159 validation pairs, again with seed 42. The annotation's \texttt{style} value, not the photo folder number, supplies the three classes. Paired images receive the same horizontal flip in training. The official test pairs remain untouched until final selection.
+
+\subsection{Metrics and Selection}
+For restoration and paired sketch evaluation, we calculate per-image MAE, SSIM, and PSNR. The fixed validation selection score is $0.8\,\mathrm{MAE}+0.2(1-\mathrm{SSIM})$, averaged equally across corruption classes or sketch styles. This score is fixed while training-loss weights vary. Classifier selection uses macro accuracy across the four balanced classes. We separately report clean behavior and each corruption severity, and both overall and style-macro sketch metrics.
+
+\section{Task 1: Universal Autoencoder}
+The universal convolutional autoencoder encodes 128 $\times$ 128 RGB images into a 16 $\times$ 16 feature map, making its latent representation smaller than the input. Bilinear upsampling and convolutions decode an RGB result. Its training objective is
+\begin{equation}
+\mathcal{L}_{\mathrm{rec}}=\alpha\lVert \hat{x}-x\rVert_1+(1-\alpha)\bigl(1-\mathrm{SSIM}(\hat{x},x)\bigr).
+\end{equation}
+We use validation to select architecture width, bottleneck size, learning rate, batch size and $\alpha$ through Optuna. The report will show at least twelve representative cases and four failures using input, target, output and error views.
+
+\section{Task 2: Hard Routing}
+A four-class convolutional classifier predicts clean, noise, blur or occlusion. Balanced mini-batches contain equal counts of every class, and cross-entropy trains the classifier. Three independent autoencoders are each trained on one damage type using MAE and SSIM. Predicted clean images use an exact identity bypass. We compare an oracle, which chooses the true branch, with the deployed route, which uses the classifier prediction. Their difference isolates routing errors from specialist restoration quality.
+
+\section{Task 3: Soft Mixture of Experts}
+The soft model initializes its gate and three experts from the trained Task 2 checkpoints. Identity is branch 0. For input $z$, the gate returns four normalized weights $w_i(z)$, and the output is
+\begin{equation}
+\hat{x}=w_0(z)z+\sum_{i=1}^{3} w_i(z)E_i(z),\qquad \sum_{i=0}^{3}w_i(z)=1.
+\end{equation}
+Initially the experts are frozen while the gate adapts. Joint fine-tuning then updates experts with a smaller learning rate. The loss combines reconstruction, gate cross-entropy, and a batch-level balance penalty. We examine average weights by true class and severity to identify useful specialization or branch collapse.
+
+\section{Task 4: Conditional Face-to-Sketch GAN}
+The generator receives a normalized photograph and a learned embedding of one of three FS2K style labels. A compact U-Net with skip connections produces a three-channel sketch. A PatchGAN discriminator receives the photograph, real or generated sketch, and its own learned style embedding. We alternate discriminator and generator updates with binary cross-entropy adversarial loss; the generator also minimizes a weighted paired $\ell_1$ term. Optuna searches learning rates, batch size, width, dropout, style-embedding size, and reconstruction weight. The best configuration is trained beyond the short search trials before final test evaluation.
+
+\section{Implementation and Reproducibility}
+Training uses PyTorch, fixed seeds, saved dataset manifests, resume checkpoints, and local MLflow experiment records. The final model graphs are exported to ONNX and checked against PyTorch output numerically before FastAPI inference. A React and Tailwind browser interface, designed in Google Stitch, exposes all four workspaces. Docker Compose starts the frontend and CPU inference backend with one command. The Git repository excludes raw datasets, secrets, virtual environments, and mutable experiment stores.
+
+\section{Experimental Results}
+\input{generated/results.tex}
+
+\section{Discussion and Limitations}
+This section will interpret the measured trade-offs after final evaluation. In particular, oracle-versus-predicted differences distinguish classifier mistakes from expert quality, while per-severity tables show whether apparent gains survive stronger corruption. Face-to-sketch scores compare each generated image only with the paired target for its annotated style; changing style for the same photo is assessed qualitatively, since counterfactual targets are unavailable.
+
+\section{Conclusion}
+The final conclusion will reflect the recorded held-out results and identified failure cases.
+
+\appendices
+\section{AI Assistance and Verification}
+AI assistance was used to organize the assignment plan; draft implementation code, interface prompts, and report text. The author verified dataset split counts and provenance, inspected generated UI output, ran automated and GPU checks, reviewed numerical results and failures, and retained responsibility for technical claims. AI-generated code and prose were revised where checks exposed errors. The repository records design prompts and experiment configurations for auditability.
+
+\section{Demonstration and Artifacts}
+The final YouTube demonstration link and model download locations will be inserted after the outputs are verified.
+
+\begin{thebibliography}{9}
+\bibitem{parkhi2012} O. M. Parkhi, A. Vedaldi, A. Zisserman, and C. V. Jawahar, ``Cats and Dogs,'' in \emph{Proc. CVPR}, 2012. [Online]. Available: \url{https://www.robots.ox.ac.uk/~vgg/publications/2012/parkhi12a/}
+\bibitem{wang2004} Z. Wang, A. C. Bovik, H. R. Sheikh, and E. P. Simoncelli, ``Image quality assessment: From error visibility to structural similarity,'' \emph{IEEE Trans. Image Process.}, vol. 13, no. 4, pp. 600--612, 2004. [Online]. Available: \url{https://ece.uwaterloo.ca/~z70wang/research/ssim/}
+\bibitem{jacobs1991} R. A. Jacobs, M. I. Jordan, S. J. Nowlan, and G. E. Hinton, ``Adaptive mixtures of local experts,'' \emph{Neural Computation}, vol. 3, no. 1, pp. 79--87, 1991.
+\bibitem{isola2017} P. Isola, J.-Y. Zhu, T. Zhou, and A. A. Efros, ``Image-to-image translation with conditional adversarial networks,'' in \emph{Proc. CVPR}, 2017. [Online]. Available: \url{https://openaccess.thecvf.com/content_cvpr_2017/html/Isola_Image-To-Image_Translation_With_CVPR_2017_paper.html}
+\bibitem{fan2022} D.-P. Fan \emph{et al.}, ``Facial-sketch synthesis: A new challenge,'' 2022. [Online]. Available: \url{https://github.com/DengPingFan/FS2K}
+\bibitem{akiba2019} T. Akiba, S. Sano, T. Yanase, T. Ohta, and M. Koyama, ``Optuna: A next-generation hyperparameter optimization framework,'' in \emph{Proc. KDD}, 2019. [Online]. Available: \url{https://arxiv.org/abs/1907.10902}
+\end{thebibliography}
+
+\end{document}
+
