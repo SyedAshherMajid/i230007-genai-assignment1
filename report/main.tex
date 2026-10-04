@@ -43,7 +43,19 @@ The universal convolutional autoencoder encodes each 128 $\times$ 128 RGB input 
 \begin{equation}
 \mathcal{L}_{\mathrm{rec}}=\alpha\lVert \hat{x}-x\rVert_1+(1-\alpha)\bigl(1-\mathrm{SSIM}(\hat{x},x)\bigr).
 \end{equation}
-We use validation to select architecture width, bottleneck size, learning rate, batch size and $\alpha$ through Optuna. The report will show at least twelve representative cases and four failures using input, target, output and error views.
+We use validation to select architecture width, bottleneck size, learning rate, batch size and $\alpha$ through Optuna. Twelve representative cases and four failures are shown using input, target, output and error views.
+
+\begin{figure}[t]
+\centering
+\scriptsize
+\begin{tabular}{c}
+\textbf{Task 1:} \fbox{RGB input} $\rightarrow$ \fbox{Conv encoder} $\rightarrow$ \fbox{16$\times$16 code} $\rightarrow$ \fbox{Decoder} \\[3pt]
+\textbf{Task 2:} \fbox{Input} $\rightarrow$ \fbox{4-class gate} $\rightarrow$ \fbox{Identity or one expert} \\[3pt]
+\textbf{Task 3:} \fbox{Input} $\rightarrow$ \fbox{Gate + four branches} $\rightarrow$ \fbox{Weighted sum}
+\end{tabular}
+\caption{Restoration architectures. Task 2 selects one branch; Task 3 combines all branches using differentiable weights.}
+\label{fig:restoration-architecture}
+\end{figure}
 
 \section{Task 2: Hard Routing}
 A four-class convolutional classifier predicts clean, noise, blur or occlusion. Balanced mini-batches contain equal counts of every class, and cross-entropy trains the classifier. Three independent autoencoders are each trained on one damage type using MAE and SSIM. Predicted clean images use an exact identity bypass. We compare an oracle, which chooses the true branch, with the deployed route, which uses the classifier prediction. Their difference isolates routing errors from specialist restoration quality.
@@ -58,8 +70,26 @@ Initially the experts are frozen while the gate adapts. Joint fine-tuning then u
 \section{Task 4: Conditional Face-to-Sketch GAN}
 The generator receives a normalized photograph and a learned embedding of one of three FS2K style labels. A compact U-Net with skip connections produces a three-channel sketch. A PatchGAN discriminator receives the photograph, real or generated sketch, and its own learned style embedding. We alternate discriminator and generator updates with binary cross-entropy adversarial loss; the generator also minimizes a weighted paired $\ell_1$ term. Optuna searches learning rates, batch size, width, dropout, style-embedding size, and reconstruction weight. The best configuration is trained beyond the short search trials before final test evaluation.
 
+\begin{figure}[t]
+\centering
+\scriptsize
+\begin{tabular}{c}
+\fbox{Photo + style embedding} $\rightarrow$ \fbox{U-Net generator} $\rightarrow$ \fbox{Sketch} \\[3pt]
+\fbox{Photo + sketch + style} $\rightarrow$ \fbox{Patch discriminator} $\rightarrow$ \fbox{Real/fake patches}
+\end{tabular}
+\caption{Task 4 conditional GAN architecture. Only the generator is exported for application inference.}
+\label{fig:gan-architecture}
+\end{figure}
+
 \section{Implementation and Reproducibility}
-Training uses PyTorch, fixed seeds, saved dataset manifests, resume checkpoints, and local MLflow experiment records. The final model graphs are exported to ONNX and checked against PyTorch output numerically before FastAPI inference. A React and Tailwind browser interface, designed in Google Stitch, exposes all four workspaces and offers their trained ONNX graphs for download. Docker Compose starts the frontend and CPU inference backend with one command. The Git repository excludes raw datasets, secrets, virtual environments, and mutable experiment stores.
+Training uses PyTorch, fixed seeds, saved dataset manifests, resume checkpoints, and local MLflow experiment records. The final model graphs are exported to ONNX and checked against PyTorch output numerically before FastAPI inference. A React and Tailwind browser interface, designed in Google Stitch, exposes all four workspaces and offers their trained ONNX graphs for download. Docker Compose starts the frontend and CPU inference backend with one command. The Git repository excludes raw datasets, secrets, virtual environments, and mutable experiment stores. The source repository is \url{https://github.com/SyedAshherMajid/i230007-genai-assignment1}.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{figures/stitch_dashboard.png}
+\caption{Original Google Stitch design used to guide the React interface before implementation.}
+\label{fig:stitch}
+\end{figure}
 
 \begin{figure}[t]
 \centering
@@ -84,6 +114,14 @@ Training uses PyTorch, fixed seeds, saved dataset manifests, resume checkpoints,
 
 \section{Experimental Results}
 \input{generated/results.tex}
+\input{generated/optuna.tex}
+
+\begin{figure*}[t]
+\centering
+\includegraphics[width=0.88\textwidth]{figures/training_curves.png}
+\caption{Training and validation trajectories for the selected Task 1, classifier, salt specialist, and Task 4 runs. Each panel uses separate axes for its validation measure and training loss. The GAN validation score is noisier than its steadily declining paired reconstruction loss, motivating checkpoint selection by validation rather than the last epoch.}
+\label{fig:training-curves}
+\end{figure*}
 
 \section{Discussion and Limitations}
 The Task 1 results show a consistent severity effect for spatially destructive inputs: MAE rises from 0.0420 at low occlusion to 0.0599 at high occlusion, while SSIM falls from 0.7595 to 0.6414. High noise and blur also reduce structure scores, but remain easier than large masked regions. On clean inputs the autoencoder still changes pixels (MAE 0.0355), unlike Task 2's explicit identity bypass; this is a measured limitation of a single shared reconstruction path. The Task 2 classifier reached 0.9931 validation macro-F1, but this validation result alone does not establish routed test performance; the held-out oracle-versus-predicted comparison remains necessary to attribute errors to routing or expert quality.
@@ -98,7 +136,7 @@ The final conclusion will reflect the recorded held-out results and identified f
 AI assistance was used to organize the assignment plan; draft implementation code, interface prompts, and report text. The author verified dataset split counts and provenance, inspected generated UI output, ran automated and GPU checks, reviewed numerical results and failures, and retained responsibility for technical claims. AI-generated code and prose were revised where checks exposed errors. The repository records design prompts and experiment configurations for auditability.
 
 \section{Demonstration and Artifacts}
-The final YouTube demonstration link and model download locations will be inserted after the outputs are verified.
+The source repository is \url{https://github.com/SyedAshherMajid/i230007-genai-assignment1}. The final YouTube demonstration URL and trained ONNX download location will be added after all four workspaces are verified.
 
 \begin{thebibliography}{9}
 \bibitem{parkhi2012} O. M. Parkhi, A. Vedaldi, A. Zisserman, and C. V. Jawahar, ``Cats and Dogs,'' in \emph{Proc. CVPR}, 2012. [Online]. Available: \url{https://www.robots.ox.ac.uk/~vgg/publications/2012/parkhi12a/}

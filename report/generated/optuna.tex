@@ -1,0 +1,16 @@
+\begin{table*}[t]
+\centering
+\caption{Bounded Optuna studies on the validation split. Objectives differ by task: reconstruction studies minimize the fixed MAE--SSIM score, while the classifier minimizes $1-\mathrm{macro\mbox{-}F1}$. Short-run objectives are used for configuration screening and are not final test scores.}
+\label{tab:optuna}
+\footnotesize
+\begin{tabular}{lrrp{0.53\textwidth}}
+\toprule
+Study & Completed/other & Best objective & Selected short-run configuration \\
+\midrule
+Task 1 universal & 3/0 & 0.1421 & $\mathrm{LR}=1.03\times10^{-4}$, batch 16, base 24, bottleneck 48, $\alpha=0.526$ \\
+Task 2 classifier & 3/1 pruned & 0.0805 & $\mathrm{LR}=2.18\times10^{-4}$, batch 16, base 24, dropout 0, weight decay 0 \\
+Task 2 specialists & 3/0 & 0.0952 & Shared $\mathrm{LR}=5.57\times10^{-4}$, batch 4, base 24, bottleneck 64, $\alpha=0.556$ \\
+Task 4 conditional GAN & 3/1 failed, 1 pruned & 0.2051 & Generator/discriminator LR $1.06/1.50\times10^{-4}$, batch 4, base 32, embedding 16, dropout 0.5, $\lambda_{L1}=100$ \\
+\bottomrule
+\end{tabular}
+\end{table*}
