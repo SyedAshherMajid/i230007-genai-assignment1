@@ -1,0 +1,13 @@
+.git
+.venv
+.venv-tools
+data
+artifacts
+models
+mlruns
+frontend/node_modules
+frontend/dist
+planning
+wheelhouse
+*.pdf
+
